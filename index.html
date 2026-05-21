@@ -649,11 +649,10 @@
         }
 
         // ============================================================================
-        // SHADERS
+        // SHADERS - Fixed: No leading whitespace before #version
         // ============================================================================
 
-        const VERTEX_SHADER = `
-#version 300 es
+        const VERTEX_SHADER = `#version 300 es
 precision highp float;
 
 in vec3 position;
@@ -679,11 +678,9 @@ void main(void) {
     vs_out.fragPosLightSpace = uLightSpaceMatrix * vec4(vs_out.fragPos, 1.0);
     
     gl_Position = uProjection * uView * vec4(vs_out.fragPos, 1.0);
-}
-`;
+}`;
 
-        const FRAGMENT_SHADER = `
-#version 300 es
+        const FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 
 in VS_OUT {
@@ -753,11 +750,9 @@ void main(void) {
     color = pow(color, vec3(1.0/2.2));
     
     outColor = vec4(color, 1.0);
-}
-`;
+}`;
 
-        const SHADOW_VERTEX_SHADER = `
-#version 300 es
+        const SHADOW_VERTEX_SHADER = `#version 300 es
 precision highp float;
 
 in vec3 position;
@@ -767,17 +762,14 @@ uniform mat4 uModel;
 
 void main(void) {
     gl_Position = uLightSpaceMatrix * uModel * vec4(position, 1.0);
-}
-`;
+}`;
 
-        const SHADOW_FRAGMENT_SHADER = `
-#version 300 es
+        const SHADOW_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 
 void main(void) {
     gl_FragDepth = gl_FragCoord.z;
-}
-`;
+}`;
 
         function compileShader(gl, source, type) {
             const shader = gl.createShader(type);
@@ -785,7 +777,9 @@ void main(void) {
             gl.compileShader(shader);
             
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error(`Shader compilation error: ${gl.getShaderInfoLog(shader)}`);
+                const error = gl.getShaderInfoLog(shader);
+                console.error(`Shader compilation error (${type === gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT'}):`, error);
+                console.error('Source:', source);
                 gl.deleteShader(shader);
                 return null;
             }
@@ -804,7 +798,7 @@ void main(void) {
             gl.linkProgram(program);
             
             if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-                console.error(`Program linking error: ${gl.getProgramInfoLog(program)}`);
+                console.error(`Program linking error:`, gl.getProgramInfoLog(program));
                 gl.deleteProgram(program);
                 return null;
             }
@@ -889,8 +883,12 @@ void main(void) {
                 this.mainProgram = createProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
                 this.shadowProgram = createProgram(gl, SHADOW_VERTEX_SHADER, SHADOW_FRAGMENT_SHADER);
                 
-                if (!this.mainProgram || !this.shadowProgram) {
-                    console.error('Failed to create shader programs');
+                if (!this.mainProgram) {
+                    console.error('Failed to create main shader program');
+                    document.getElementById('status').textContent = 'Error: Main shader failed';
+                }
+                if (!this.shadowProgram) {
+                    console.error('Failed to create shadow shader program');
                 }
             }
             
