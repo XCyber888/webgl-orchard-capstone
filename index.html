@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magical Fruit Orchard - WebGL Capstone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 100vw;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #info h2 {
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+        
+        #info p {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+        
+        #controls h3 {
+            color: #4CAF50;
+            margin-bottom: 8px;
+        }
+        
+        #controls p {
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="info">
+        <h2>🌳 Magical Fruit Orchard</h2>
+        <p>WebGL Capstone Project</p>
+        <p id="fps">FPS: 0</p>
+        <p id="meshes">Meshes: loading...</p>
+        <p id="status">Status: Initializing...</p>
+    </div>
+    
+    <div id="controls">
+        <h3>Controls</h3>
+        <p><strong>SPACEBAR:</strong> Play/Pause animation</p>
+        <p><strong>R:</strong> Reset camera</p>
+        <p><strong>Mouse:</strong> Look around (when paused)</p>
+        <p><strong>+/-:</strong> Speed up/Slow down</p>
+    </div>
+    
+    <script src="math.js"></script>
+    <script src="mesh.js"></script>
+    <script src="shaders.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
