@@ -1,149 +1,258 @@
 // ============================================================================
-// Shader Programs for WebGL Orchard
+// Shader Programs for WebGL Magic Forest
 // ============================================================================
 
-const VERTEX_SHADER = `
-#version 300 es
-precision highp float;
-
-in vec3 position;
-in vec3 normal;
-in vec2 texCoord;
-
-out VS_OUT {
-    vec3 fragPos;
-    vec3 fragNormal;
-    vec2 fragTexCoord;
-    vec4 fragPosLightSpace;
-} vs_out;
-
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
-uniform mat4 uLightSpaceMatrix;
-
-void main(void) {
-    vs_out.fragPos = (uModel * vec4(position, 1.0)).xyz;
-    vs_out.fragNormal = normalize((uModel * vec4(normal, 0.0)).xyz);
-    vs_out.fragTexCoord = texCoord;
-    vs_out.fragPosLightSpace = uLightSpaceMatrix * vec4(vs_out.fragPos, 1.0);
-    
-    gl_Position = uProjection * uView * vec4(vs_out.fragPos, 1.0);
-}
-`;
-
+// ==================== MAIN FRAGMENT SHADER ====================
 const FRAGMENT_SHADER = `
 #version 300 es
 precision highp float;
 
-in VS_OUT {
-    vec3 fragPos;
-    vec3 fragNormal;
-    vec2 fragTexCoord;
-    vec4 fragPosLightSpace;
-} fs_in;
+// Varyings from vertex shader
+in vec3 v_worldPos;
+in vec3 v_normal;
+in vec2 v_uv;
+in vec4 v_lightSpacePos;
 
-out vec4 outColor;
+// Uniforms
+uniform vec3 u_cameraPos;
+uniform vec3 u_lightPos;
+uniform vec3 u_lightColor;
+uniform float u_lightIntensity;
+uniform vec3 u_ambientColor;
+uniform vec3 u_diffuseColor;
+uniform vec3 u_specularColor;
+uniform float u_shininess;
+uniform float u_time;
+uniform int u_season;        // 0: spring, 1: summer, 2: autumn, 3: winter
+uniform bool u_isNight;
 
-uniform sampler2D uShadowMap;
-uniform vec3 uCameraPos;
-uniform vec3 uSunDirection;
-uniform vec3 uSunColor;
+// Shadow mapping
+uniform sampler2D u_shadowMap;
+uniform bool u_useShadows;
 
-const float PI = 3.14159265359;
+// Ray tracing for water reflection
+uniform bool u_isWater;
 
-// Material properties
-struct Material {
-    vec3 albedo;
-    float metallic;
-    float roughness;
-    float ao;
-};
+// Output
+out vec4 fragColor;
 
-// Light structure
-struct Light {
-    vec3 direction;
-    vec3 color;
-    float intensity;
-};
+// ==================== SHADOW CALCULATION ====================
 
-float shadowCalculation(vec4 fragPosLightSpace)
-{
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+float calculateShadow(vec4 lightSpacePos) {
+    // Perspective divide
+    vec3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+
+    // Transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
-    
-    if(projCoords.z > 1.0)
-        return 1.0;
-    
-    float closestDepth = texture(uShadowMap, projCoords.xy).r;
-    float currentDepth = projCoords.z;
-    
+
+    // Bounds check
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 || 
+        projCoords.y < 0.0 || projCoords.y > 1.0 ||
+        projCoords.z < 0.0 || projCoords.z > 1.0) {
+        return 0.0;
+    }
+
+    // PCF (Percentage Closer Filtering) for soft shadows
+    float shadow = 0.0;
+    vec2 texelSize = vec2(1.0) / vec2(textureSize(u_shadowMap, 0));
     float bias = 0.005;
-    float shadow = currentDepth - bias > closestDepth ? 0.3 : 1.0;
-    
+    float currentDepth = projCoords.z;
+
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            vec2 offset = vec2(float(x), float(y)) * texelSize;
+            float pcfDepth = texture(u_shadowMap, projCoords.xy + offset).r;
+            shadow += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0;
+
     return shadow;
 }
 
-vec3 blinnPhong(vec3 normal, vec3 viewDir, vec3 lightDir, vec3 color, vec3 albedo)
-{
+// ==================== BLINN-PHONG LIGHTING ====================
+
+vec3 calculateBlinnPhong(vec3 normal, vec3 viewDir, vec3 lightDir, float shadow) {
+    // Normalize vectors
+    normal = normalize(normal);
+    lightDir = normalize(lightDir);
+    viewDir = normalize(viewDir);
+
+    // Half vector for Blinn-Phong
+    vec3 halfDir = normalize(lightDir + viewDir);
+
+    // Diffuse component
     float diff = max(dot(normal, lightDir), 0.0);
-    
-    vec3 halfDir = normalize(viewDir + lightDir);
-    float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
-    
-    vec3 diffuse = diff * albedo * color;
-    vec3 specular = spec * color * 0.5;
-    
-    return diffuse + specular;
+
+    // Specular component
+    float spec = pow(max(dot(normal, halfDir), 0.0), u_shininess);
+
+    // Ambient, Diffuse, Specular
+    vec3 ambient = u_ambientColor;
+    vec3 diffuse = u_diffuseColor * diff * u_lightColor * u_lightIntensity;
+    vec3 specular = u_specularColor * spec * u_lightColor * u_lightIntensity;
+
+    // Apply shadow
+    diffuse *= (1.0 - shadow);
+    specular *= (1.0 - shadow);
+
+    // Night mode adjustments
+    if (u_isNight) {
+        ambient *= 0.2;
+        diffuse *= 0.3;
+        specular *= 0.1;
+    }
+
+    return ambient + diffuse + specular;
 }
 
-void main(void) {
-    vec3 normal = normalize(fs_in.fragNormal);
-    vec3 viewDir = normalize(uCameraPos - fs_in.fragPos);
-    vec3 lightDir = normalize(uSunDirection);
-    
-    // Material - varied by height and normal
-    Material mat;
-    mat.albedo = mix(vec3(0.2, 0.6, 0.1), vec3(0.8, 0.5, 0.2), 0.3);
-    mat.metallic = 0.0;
-    mat.roughness = 0.7;
-    mat.ao = 1.0;
-    
-    float shadow = shadowCalculation(fs_in.fragPosLightSpace);
-    
-    vec3 lighting = blinnPhong(normal, viewDir, lightDir, uSunColor, mat.albedo);
-    
-    // Ambient
-    vec3 ambient = vec3(0.2) * mat.albedo;
-    
-    vec3 color = (ambient + lighting * shadow) * mat.ao;
-    
-    // Fog
-    float dist = length(fs_in.fragPos - uCameraPos);
-    float fogFactor = exp(-dist * 0.001);
-    vec3 fogColor = vec3(0.7, 0.7, 0.8);
-    color = mix(fogColor, color, fogFactor);
-    
-    // Tone mapping
-    color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0/2.2));
-    
-    outColor = vec4(color, 1.0);
+// ==================== RAY-TRACED REFLECTION (Simplified) ====================
+
+vec3 calculateWaterReflection(vec3 viewDir, vec3 normal) {
+    // Simplified ray-traced reflection for water surface
+    // Instead of full ray tracing, we use environment reflection with procedural sky
+
+    vec3 reflectDir = reflect(-viewDir, normalize(normal));
+
+    // Procedural sky gradient
+    float y = reflectDir.y;
+    vec3 skyColor = mix(
+        vec3(0.5, 0.7, 0.9),  // Horizon
+        vec3(0.1, 0.2, 0.5),  // Zenith
+        clamp(y, 0.0, 1.0)
+    );
+
+    // Night sky
+    if (u_isNight) {
+        skyColor = mix(
+            vec3(0.05, 0.05, 0.15),
+            vec3(0.0, 0.0, 0.05),
+            clamp(y, 0.0, 1.0)
+        );
+    }
+
+    // Water wave effect
+    float wave = sin(v_worldPos.x * 10.0 + u_time) * sin(v_worldPos.z * 10.0 + u_time * 0.8);
+    vec3 waterColor = vec3(0.0, 0.3, 0.6) + wave * 0.1;
+
+    // Fresnel effect
+    float fresnel = pow(1.0 - max(dot(normalize(normal), viewDir), 0.0), 3.0);
+
+    return mix(waterColor, skyColor, fresnel * 0.6);
+}
+
+// ==================== SEASON COLORS ====================
+
+vec3 getSeasonColor(vec3 baseColor) {
+    vec3 seasonColor = baseColor;
+
+    if (u_season == 0) {  // Spring - fresh green
+        seasonColor = mix(baseColor, vec3(0.4, 0.8, 0.4), 0.3);
+    } else if (u_season == 1) {  // Summer - deep green
+        seasonColor = mix(baseColor, vec3(0.2, 0.6, 0.2), 0.2);
+    } else if (u_season == 2) {  // Autumn - yellow/orange
+        float autumnMix = sin(v_worldPos.x * 0.5) * 0.5 + 0.5;
+        vec3 autumnColor = mix(vec3(0.9, 0.6, 0.1), vec3(0.8, 0.3, 0.1), autumnMix);
+        seasonColor = mix(baseColor, autumnColor, 0.6);
+    } else if (u_season == 3) {  // Winter - snow/gray
+        seasonColor = mix(baseColor, vec3(0.9, 0.95, 1.0), 0.7);
+    }
+
+    return seasonColor;
+}
+
+// ==================== MAIN FUNCTION ====================
+
+void main() {
+    vec3 normal = normalize(v_normal);
+    vec3 viewDir = normalize(u_cameraPos - v_worldPos);
+    vec3 lightDir = normalize(u_lightPos - v_worldPos);
+
+    // Calculate shadow
+    float shadow = 0.0;
+    if (u_useShadows) {
+        shadow = calculateShadow(v_lightSpacePos);
+    }
+
+    // Apply season colors
+    vec3 color = getSeasonColor(u_diffuseColor);
+
+    // Water surface with ray-traced reflection
+    if (u_isWater) {
+        color = calculateWaterReflection(viewDir, normal);
+        // Add Blinn-Phong for water
+        vec3 bp = calculateBlinnPhong(normal, viewDir, lightDir, shadow);
+        color = mix(color, bp, 0.3);
+    } else {
+        // Standard Blinn-Phong
+        color = calculateBlinnPhong(normal, viewDir, lightDir, shadow);
+    }
+
+    // Snow effect in winter at high altitudes
+    if (u_season == 3 && v_worldPos.y > 2.0) {
+        color = mix(color, vec3(0.95, 0.98, 1.0), 0.5);
+    }
+
+    // Gamma correction
+    color = pow(color, vec3(1.0 / 2.2));
+
+    fragColor = vec4(color, 1.0);
 }
 `;
 
-// Shadow map shaders
+// ==================== VERTEX SHADER ====================
+const VERTEX_SHADER = `
+#version 300 es
+
+// Attributes
+in vec3 a_position;
+in vec3 a_normal;
+in vec2 a_uv;
+
+// Uniforms - Transformation matrices
+uniform mat4 u_modelMatrix;
+uniform mat4 u_viewMatrix;
+uniform mat4 u_projectionMatrix;
+uniform mat4 u_normalMatrix;
+uniform mat4 u_lightSpaceMatrix;  // For shadow mapping
+
+// Varyings passed to fragment shader
+out vec3 v_worldPos;
+out vec3 v_normal;
+out vec2 v_uv;
+out vec4 v_lightSpacePos;
+
+void main() {
+    // World position
+    vec4 worldPos = u_modelMatrix * vec4(a_position, 1.0);
+    v_worldPos = worldPos.xyz;
+
+    // Normal transformation
+    v_normal = mat3(u_normalMatrix) * a_normal;
+
+    // UV coordinates
+    v_uv = a_uv;
+
+    // Light space position for shadow mapping
+    v_lightSpacePos = u_lightSpaceMatrix * worldPos;
+
+    // Final position
+    gl_Position = u_projectionMatrix * u_viewMatrix * worldPos;
+}
+`;
+
+// ==================== SHADOW MAPPING SHADERS ====================
+
 const SHADOW_VERTEX_SHADER = `
 #version 300 es
-precision highp float;
 
-in vec3 position;
+in vec3 a_position;
 
-uniform mat4 uLightSpaceMatrix;
-uniform mat4 uModel;
+uniform mat4 u_lightSpaceMatrix;
+uniform mat4 u_modelMatrix;
 
-void main(void) {
-    gl_Position = uLightSpaceMatrix * uModel * vec4(position, 1.0);
+void main() {
+    gl_Position = u_lightSpaceMatrix * u_modelMatrix * vec4(a_position, 1.0);
 }
 `;
 
@@ -151,12 +260,15 @@ const SHADOW_FRAGMENT_SHADER = `
 #version 300 es
 precision highp float;
 
-void main(void) {
-    gl_FragDepth = gl_FragCoord.z;
+out vec4 fragColor;
+
+void main() {
+    // Write depth to shadow map
+    fragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
 }
 `;
 
-// Sky shader (screen quad)
+// Sky shader (screen quad) - LEGACY (kept for compatibility)
 const SKY_VERTEX_SHADER = `
 #version 300 es
 
