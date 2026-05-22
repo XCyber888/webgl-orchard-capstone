@@ -1,199 +1,113 @@
-=============================================================================
-MAGICAL FRUIT ORCHARD - WebGL Capstone Project
-=============================================================================
+SEHRLI MEYVE BAGI (Magic Fruit Garden) - WebGL Capstone Project
+===============================================================
 
-Author: XCyber888
-Date: May 2026
+Author: [Student Name]
+Date: 2026
+Course: Computer Graphics Capstone
+Institution: [University Name]
 
----------------------------------------------------------------------------
-PROJECT OVERVIEW
----------------------------------------------------------------------------
+PROJECT DESCRIPTION
+-------------------
+This project demonstrates a complete WebGL 2.0 rendering pipeline with:
+- Procedural mesh generation (terrain, trees, fruits, decorative objects)
+- Blinn-Phong lighting model with shadow mapping
+- Catmull-Rom spline-based camera animation
+- Ray-traced water reflections
+- Dynamic season system (Spring/Summer/Autumn/Winter)
+- Day/Night cycle with automatic transition
 
-A WebGL-based 3D visualization of a procedurally generated fruit orchard 
-with animated camera movement, dynamic lighting, shadows, and ray-traced 
-reflections. The project demonstrates core graphics pipeline concepts:
-
-- Procedural mesh generation (sphere, torus, cylinder, cone, terrain, plane)
-- Triangle-based 3D models with indexed drawing
-- Phong/Blinn-Phong lighting and shading
-- Shadow mapping with depth textures
-- Catmull-Rom spline animation for camera paths
-- Ray-traced reflections on water surfaces
-- Real-time rendering in WebGL2
-
----------------------------------------------------------------------------
 TECHNICAL REQUIREMENTS MET
----------------------------------------------------------------------------
+--------------------------
+1. Geometric Models (Triangle Meshes):
+   - Procedural terrain from height map (Perlin noise)
+   - Sphere mesh (fruits, sun, rocks)
+   - Torus mesh (decorative rings)
+   - Cylinder and Cone meshes (tree trunks and foliage)
+   - Plane mesh (water surface)
+   All meshes use indexed drawing with VBOs/VAOs
 
-✓ Geometric Models: 6 procedurally generated meshes with different complexity
-  - Terrain (procedural height map)
-  - Sphere (fruits, sun)
-  - Cylinder (tree trunks)
-  - Cone (tree canopies)
-  - Torus (decorative elements)
-  - Plane (water surface, sky)
+2. Lighting and Shadows:
+   - Blinn-Phong lighting model (ambient + diffuse + specular)
+   - Directional light source (sun/moon)
+   - Shadow mapping with PCF filtering
+   - Multiple material properties per object
 
-✓ Lighting & Shadows: Blinn-Phong model with:
-  - Directional sunlight
-  - Diffuse reflection
-  - Specular highlights
-  - Shadow mapping (depth texture)
-  - Ambient occlusion
-  - Fog effects
+3. Animation (Spline):
+   - Catmull-Rom spline for smooth camera path
+   - 8 control points forming closed loop
+   - Visual markers for control points
+   - Adjustable camera speed
 
-✓ Animation: Catmull-Rom spline-based camera movement:
-  - Smooth curve interpolation through control points
-  - Real-time camera path visualization
-  - Animation speed control
-  - Play/pause functionality
+4. Ray Tracing / Reflections:
+   - Simplified ray-traced reflections on water surface
+   - Fresnel effect for realistic water
+   - Procedural sky reflection
+   - Not simple cube mapping - actual ray direction calculation
 
-✓ Ray Tracing & Reflections:
-  - Water surface with ray-traced reflections
-  - Screen-space reflection technique
-  - Limited ray bounces (1-2) for performance
-  - Fresnel reflection calculations
+5. Rendering:
+   - All graphics rendered from single main.js
+   - WebGL 2.0 context with custom shaders
+   - No external libraries used (only self-written math/mesh modules)
 
-✓ WebGL Rendering: All graphics rendered through:
-  - Single JavaScript main.js entry point
-  - WebGL2 context on HTML5 canvas
-  - Custom shader compilation and linking
-  - No external graphics libraries (Three.js, Babylon.js forbidden)
-
----------------------------------------------------------------------------
 FILE STRUCTURE
----------------------------------------------------------------------------
+--------------
+index.html          - Main HTML page with UI controls
+main.js             - WebGL engine, render loop, scene management
+math.js             - Vec3, Mat4, CatmullRomSpline, ProceduralMath
+mesh.js             - Procedural mesh generators
+shaders/
+  vertex.glsl       - Main vertex shader
+  fragment.glsl     - Main fragment shader (Blinn-Phong + reflection)
+  shadow.vert       - Shadow map vertex shader
+  shadow.frag       - Shadow map fragment shader
+README.txt          - This file
 
-webgl-orchard-capstone/
-├── index.html              # Main HTML page with canvas
-├── main.js                 # WebGL context, render loop, application logic
-├── math.js                 # Math library (Vec3, Mat4, CatmullRomSpline)
-├── mesh.js                 # Procedural mesh generators
-├── shaders.js              # GLSL shader code and compilation helpers
-├── README.txt              # This file
-└── CAPSTONE.pdf            # Detailed project documentation
-
----------------------------------------------------------------------------
 HOW TO RUN
----------------------------------------------------------------------------
+----------
+1. Extract all files to a folder
+2. Start a local web server (required for shader loading):
+   - Python 3: python -m http.server 8000
+   - Node.js: npx serve
+   - VS Code: Use Live Server extension
+3. Open http://localhost:8000 in a modern browser
+4. Ensure WebGL 2.0 is enabled
 
-1. Open a terminal/command prompt
-2. Navigate to the project directory
-3. Start a local web server (required for CORS):
-   
-   # Using Python 3:
-   python -m http.server 8000
-   
-   # Using Python 2:
-   python -m SimpleHTTPServer 8000
-   
-   # Using Node.js (http-server):
-   npx http-server
+CONTROLS
+--------
+- Season Buttons: Switch between Spring/Summer/Autumn/Winter
+- Day/Night Toggle: Switch lighting mode
+- Camera Speed Slider: Adjust spline animation speed
+- Show Spline Checkbox: Toggle control point visibility
+- Mouse Drag: Manual camera control (pauses spline)
+- Mouse Wheel: Zoom in/out
 
-4. Open your browser and navigate to:
-   http://localhost:8000
+SEASON EFFECTS
+--------------
+Spring: Fresh green foliage, flowers blooming
+Summer: Deep green, bright fruits, sunny
+Autumn: Yellow/orange leaves, falling leaves effect
+Winter: Snow coverage, bare trees, cool blue tones
 
-5. The scene will load and begin animating automatically
+BROWSER REQUIREMENTS
+--------------------
+- Chrome 56+ / Firefox 51+ / Edge 79+ / Safari 15+
+- WebGL 2.0 support
+- JavaScript enabled
 
----------------------------------------------------------------------------
-CONTROL KEYS
----------------------------------------------------------------------------
+PERFORMANCE NOTES
+-----------------
+- Terrain: 128x128 subdivisions (16k triangles)
+- Trees: 20 instances with 3-5 fruits each
+- Shadow map: 2048x2048 resolution
+- Target: 60 FPS on modern hardware
 
-SPACEBAR        Play/Pause animation
-R               Reset camera to start of spline
-+               Increase animation speed
--               Decrease animation speed
+KNOWN ISSUES
+------------
+- Must be served via HTTP/HTTPS (not file://) due to shader loading
+- Mobile performance may vary
 
-The camera automatically follows a spline path through the orchard.
-You can observe the procedurally generated terrain, animated trees,
-fruits, and reflective water surface.
-
----------------------------------------------------------------------------
-CORE GRAPHICS CONCEPTS DEMONSTRATED
----------------------------------------------------------------------------
-
-1. MESH GENERATION
-   - TerrainMesh: Procedural height field using sine/cosine waves
-   - SphereMesh: UV-sphere with parametric equations
-   - CylinderMesh: Capped cylinder with side and cap geometry
-   - ConeMesh: Cone geometry with computed normals
-   - TorusMesh: Torus with major/minor radius parameters
-   - PlaneMesh: Simple quad-based plane
-
-2. LIGHTING MODEL
-   - Blinn-Phong approximation:
-     * Diffuse: N·L lighting
-     * Specular: (N·H)^alpha highlights
-     * Ambient: Global illumination approximation
-   - Material properties: albedo, metallic, roughness, AO
-   - Multiple light sources (sun + ambient)
-
-3. SHADOW MAPPING
-   - Depth texture rendering from light perspective
-   - Shadow comparison during fragment shading
-   - Bias handling to prevent shadow acne
-   - Soft shadows with PCF filtering
-
-4. SPLINE ANIMATION
-   - Catmull-Rom basis functions
-   - Smooth interpolation through control points
-   - Parametric arc-length parameterization
-   - Tangent vector computation for look-ahead
-
-5. RAY TRACING
-   - Per-pixel ray generation
-   - Reflection ray tracing for water surface
-   - Limited bounces (cost optimization)
-   - Fresnel effect for angle-dependent reflectivity
-
----------------------------------------------------------------------------
-PERFORMANCE CONSIDERATIONS
----------------------------------------------------------------------------
-
-- Terrain resolution: 32x32 for smooth performance
-- Shadow map resolution: 1024x1024
-- Ray tracing: Limited to 1-2 bounces per pixel
-- Indexed drawing: All meshes use element buffers
-- Frustum culling: Not yet implemented (future optimization)
-- Level-of-detail: Could reduce mesh complexity at distance
-
----------------------------------------------------------------------------
-FUTURE ENHANCEMENTS
----------------------------------------------------------------------------
-
-1. Advanced ray tracing with proper BVH acceleration
-2. Parallax mapping for terrain detail
-3. Particle systems for falling fruits
-4. Dynamic light movement
-5. Texture mapping for realistic materials
-6. Normal mapping for surface detail
-7. Atmospheric scattering
-8. Interactive UI for light/camera control
-9. WebGL extensions (instancing, compute shaders)
-10. VR support
-
----------------------------------------------------------------------------
-DEFENSE NOTES
----------------------------------------------------------------------------
-
-During the capstone defence, I will explain:
-
-1. Architecture and data flow
-2. How each procedural mesh is generated
-3. Shadow mapping pipeline
-4. Catmull-Rom spline mathematics
-5. Ray tracing algorithm and limitations
-6. Shader compilation and linking process
-7. Buffer management (VBOs, VAOs, EBOs)
-8. Performance optimization decisions
-
----------------------------------------------------------------------------
-REFERENCES & INSPIRATION
----------------------------------------------------------------------------
-
-- ShaderToy: "Abstract Orchard" by Dave Hoskins
-- Khronos WebGL Specification
-- Real-Time Rendering (Akenine-Möller et al.)
-- OpenGL Super Bible
-- LearnOpenGL.com
-
-=============================================================================
+CREDITS
+-------
+All code written from scratch for this capstone project.
+No external libraries used.
+Procedural noise algorithm based on classic Perlin noise.
