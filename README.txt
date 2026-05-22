@@ -1,10 +1,10 @@
-SEHRLI MEYVE BAGI (Magic Fruit Garden) - WebGL Capstone Project
+SEHRLI MESE (Magic Forest) - WebGL Capstone Project
 ===============================================================
 
-Author: [Student Name]
+Author: Xalid Yusifov
 Date: 2026
 Course: Computer Graphics Capstone
-Institution: [University Name]
+Institution: Karabkh University
 
 PROJECT DESCRIPTION
 -------------------
