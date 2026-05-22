@@ -1,1218 +1,1166 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magical Fruit Orchard - WebGL Capstone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sehrli Meyvə Bağı - Quşlar və Fəsillər</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        #title {
+            position: absolute; top: 20px; left: 20px;
+            font-size: 28px; font-weight: bold; color: #ffecb3;
+            text-shadow: 2px 2px 8px #2a4a1a;
+            background: rgba(0,0,0,0.5); padding: 8px 24px;
+            border-radius: 40px; backdrop-filter: blur(8px);
+            z-index: 15; letter-spacing: 2px;
+            border-left: 5px solid #ffaa66;
+            pointer-events: none;
+            font-family: 'Segoe UI', cursive;
+            transition: all 0.5s ease;
         }
-        
-        body {
-            width: 100vw;
-            height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a1a;
-            overflow: hidden;
-        }
-        
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        
+
         #info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 5px;
-            font-size: 12px;
+            position: absolute; top: 90px; left: 20px; color: white;
+            background: rgba(0,0,0,0.65); padding: 8px 16px; border-radius: 12px;
+            backdrop-filter: blur(8px); pointer-events: none; z-index: 10;
+            font-size: 12px; border-left: 3px solid #ffaa66;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             max-width: 300px;
-            font-family: 'Courier New', monospace;
+            line-height: 1.6;
         }
-        
-        #info h2 {
-            margin-bottom: 10px;
-            color: #4CAF50;
+
+        #controls-panel {
+            position: absolute; bottom: 20px; right: 20px;
+            background: rgba(30,30,40,0.92); backdrop-filter: blur(12px);
+            padding: 16px 20px; border-radius: 24px; color: white; font-size: 13px;
+            z-index: 20; pointer-events: auto; border: 1px solid rgba(255,200,100,0.5);
+            font-family: monospace; min-width: 260px; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
         }
-        
-        #info p {
-            margin: 5px 0;
-            line-height: 1.4;
+
+        #controls-panel h3 { margin: 0 0 8px 0; font-size: 16px; color: #ffaa66; text-align: center; letter-spacing: 1px; }
+
+        .season-buttons, .light-buttons { display: flex; gap: 10px; justify-content: center; margin: 12px 0; flex-wrap: wrap; }
+
+        .season-btn, .light-btn {
+            background: #2c2c3a; border: none; color: #ddd; padding: 6px 14px;
+            border-radius: 40px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 13px;
         }
-        
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 12px;
-            border-radius: 5px;
-            font-size: 11px;
+
+        .season-btn:hover, .light-btn:hover { transform: scale(1.05); }
+
+        .season-btn.active { background: #ff8844; color: white; box-shadow: 0 0 10px #ffaa66; }
+        .light-btn.active { background: #5a8ec5; color: white; }
+
+        .action-buttons { display: flex; gap: 14px; justify-content: center; margin: 12px 0; }
+
+        .action-btn {
+            background: #3a6ea5; border: none; color: white; padding: 7px 18px;
+            border-radius: 40px; cursor: pointer; font-size: 14px; font-weight: bold;
+            transition: 0.2s;
         }
-        
-        #controls h3 {
-            color: #4CAF50;
-            margin-bottom: 8px;
+
+        .action-btn:hover { background: #5a8ec5; transform: scale(1.02); }
+
+        .ctrl-note { font-size: 10px; opacity: 0.7; margin-top: 12px; text-align: center; border-top: 1px solid #555; padding-top: 8px; }
+
+        #season-indicator {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.7); padding: 10px 20px;
+            border-radius: 20px; color: #ffdd88; font-size: 18px;
+            font-weight: bold; z-index: 15; pointer-events: none;
+            border: 2px solid rgba(255,200,100,0.3);
+            transition: all 0.5s ease;
         }
-        
-        #controls p {
-            margin: 3px 0;
+
+        #weather-indicator {
+            position: absolute; top: 70px; right: 20px;
+            background: rgba(0,0,0,0.6); padding: 6px 14px;
+            border-radius: 15px; color: #aaddff; font-size: 14px;
+            z-index: 15; pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        @media (max-width: 600px) { 
+            #controls-panel { transform: scale(0.85); right: -15px; bottom: -5px; } 
+            #title { font-size: 20px; top: 12px; left: 12px; } 
+            #info { top: 70px; font-size: 9px; } 
+            #season-indicator { font-size: 14px; padding: 6px 12px; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    
+    <div id="title">✨ Sehrli Meşə ✨</div>
     <div id="info">
-        <h2>🌳 Magical Fruit Orchard</h2>
-        <p>WebGL Capstone Project</p>
-        <p id="fps">FPS: 0</p>
-        <p id="meshes">Meshes: loading...</p>
-        <p id="status">Status: Initializing...</p>
+        🍎 6 növ meyvə | 4 fəsil | Quşlar (yaz/yay) | Çiçəklər (yaz) | Qar (qış) | Yarpaq tökülmə (payız)
     </div>
-    
-    <div id="controls">
-        <h3>Controls</h3>
-        <p><strong>SPACEBAR:</strong> Play/Pause animation</p>
-        <p><strong>R:</strong> Reset camera</p>
-        <p><strong>+/-:</strong> Speed up/Slow down</p>
+    <div id="season-indicator">🌸 Yaz Fəsli</div>
+    <div id="weather-indicator">☀️ Günəşli</div>
+
+    <div id="controls-panel">
+        <h3>🌿 Fəsil & İşıq</h3>
+        <div class="season-buttons">
+            <button id="springBtn" class="season-btn active">🌸 Yaz</button>
+            <button id="summerBtn" class="season-btn">☀️ Yay</button>
+            <button id="autumnBtn" class="season-btn">🍂 Payız</button>
+            <button id="winterBtn" class="season-btn">❄️ Qış</button>
+        </div>
+        <div class="light-buttons">
+            <button id="nightBtn" class="light-btn">🌙 Gecə</button>
+            <button id="dayBtn" class="light-btn active">☀️ Gündüz</button>
+            <button id="autoBtn" class="light-btn">🔄 Avto</button>
+        </div>
+        <div class="action-buttons">
+            <button id="resetCamBtn" class="action-btn">🔄 Sıfırla</button>
+            <button id="toggleAnimBtn" class="action-btn">⏸️ Dayan</button>
+        </div>
+        <div class="ctrl-note">
+            ✨ Avtomatik gecə/gündüz dövrü | Quşlar uçur | Çiçəklər açır | Yarpaqlar tökülür
+        </div>
     </div>
 
-    <script>
-        // ============================================================================
-        // MATH LIBRARY
-        // ============================================================================
-        
-        class Vec3 {
-            constructor(x = 0, y = 0, z = 0) {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-            }
-            
-            static add(a, b) {
-                return new Vec3(a.x + b.x, a.y + b.y, a.z + b.z);
-            }
-            
-            static sub(a, b) {
-                return new Vec3(a.x - b.x, a.y - b.y, a.z - b.z);
-            }
-            
-            static mul(v, s) {
-                return new Vec3(v.x * s, v.y * s, v.z * s);
-            }
-            
-            static div(v, s) {
-                return Vec3.mul(v, 1 / s);
-            }
-            
-            static dot(a, b) {
-                return a.x * b.x + a.y * b.y + a.z * b.z;
-            }
-            
-            static cross(a, b) {
-                return new Vec3(
-                    a.y * b.z - a.z * b.y,
-                    a.z * b.x - a.x * b.z,
-                    a.x * b.y - a.y * b.x
-                );
-            }
-            
-            static length(v) {
-                return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-            }
-            
-            static normalize(v) {
-                const len = Vec3.length(v);
-                return len > 0 ? Vec3.div(v, len) : new Vec3();
-            }
-            
-            static lerp(a, b, t) {
-                return Vec3.add(a, Vec3.mul(Vec3.sub(b, a), t));
-            }
-            
-            toArray() {
-                return [this.x, this.y, this.z];
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
             }
         }
+    </script>
 
-        class Mat4 {
-            constructor(data = null) {
-                if (data) {
-                    this.data = data;
-                } else {
-                    this.data = new Float32Array(16);
-                    Mat4.identity(this.data);
+    <script type="module">
+        import * as THREE from 'three';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // ==================== SƏHNƏ ====================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x071a2b);
+        scene.fog = new THREE.FogExp2(0x071a2b, 0.0035);
+
+        // ==================== KAMERA ====================
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.3, 500);
+        camera.position.set(8, 5, 12);
+
+        // ==================== RENDERERLƏR ====================
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
+        // ==================== İŞIQLANDIRMA ====================
+        const ambientLight = new THREE.AmbientLight(0x332211, 0.65);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffaa66, 1.25);
+        sunLight.position.set(12, 18, -5);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 45;
+        sunLight.shadow.camera.left = -12;
+        sunLight.shadow.camera.right = 12;
+        sunLight.shadow.camera.top = 12;
+        sunLight.shadow.camera.bottom = -12;
+        scene.add(sunLight);
+
+        const fillLight = new THREE.PointLight(0xcc8844, 0.55, 30);
+        fillLight.position.set(3, 5, 2);
+        scene.add(fillLight);
+
+        const backLight = new THREE.DirectionalLight(0xaa8866, 0.4);
+        backLight.position.set(-5, 6, -6);
+        scene.add(backLight);
+
+        // ==================== RELYEF FUNKSİYASI ====================
+        function terrainHeight(x, z) {
+            let y = 0;
+            y += Math.sin(x * 0.45) * Math.cos(z * 0.45) * 0.65;
+            y += Math.sin(x * 0.9 + 1.2) * 0.4;
+            y += Math.cos(z * 0.95) * 0.4;
+            y += Math.sin((x * 0.7 + z * 0.6) * 1.6) * 0.3;
+            y += Math.sin(x * 2.5) * 0.1 + Math.cos(z * 2.5) * 0.1;
+            const distToCenter = Math.sqrt(x*x + z*z);
+            if(distToCenter < 5.0) y -= 0.35 * (1 - distToCenter/5.0);
+            return Math.max(-0.8, Math.min(1.65, y));
+        }
+
+        const terrainWidth = 38, terrainDepth = 38, segments = 140;
+        const terrainGeometry = new THREE.PlaneGeometry(terrainWidth, terrainDepth, segments, segments);
+        terrainGeometry.rotateX(-Math.PI / 2);
+        const positionsAttr = terrainGeometry.attributes.position.array;
+        terrainGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(positionsAttr.length), 3));
+        const colorAttr = terrainGeometry.attributes.color.array;
+
+        for (let i = 0; i <= segments; i++) {
+            for (let j = 0; j <= segments; j++) {
+                const idx = (i * (segments + 1) + j) * 3;
+                const x = positionsAttr[idx];
+                const z = positionsAttr[idx+2];
+                const y = terrainHeight(x, z);
+                positionsAttr[idx+1] = y;
+                let r = 0.25 + (y + 0.6) * 0.45;
+                let g = 0.4 + (y + 0.5) * 0.5;
+                let b = 0.15 + y * 0.2;
+                colorAttr[idx] = Math.min(1.0, r);
+                colorAttr[idx+1] = Math.min(1.0, g);
+                colorAttr[idx+2] = Math.min(0.9, b);
+            }
+        }
+        terrainGeometry.computeVertexNormals();
+        const terrainMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, metalness: 0.1 });
+        const terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
+        terrain.receiveShadow = true;
+        scene.add(terrain);
+
+        // ==================== 6 MEYVƏ NÖVÜ ====================
+        function createApple() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16), new THREE.MeshStandardMaterial({ color: 0xE34234, roughness: 0.2 }));
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.05, 4), new THREE.MeshStandardMaterial({ color: 0x8B5A2B }));
+            stem.position.y = 0.09;
+            group.add(body, stem);
+            return group;
+        }
+        function createOrange() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16), new THREE.MeshStandardMaterial({ color: 0xFFA500, roughness: 0.25 }));
+            const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.06, 6), new THREE.MeshStandardMaterial({ color: 0x6B8E23 }));
+            leaf.position.set(0.07, 0.1, 0);
+            leaf.rotation.z = 0.5;
+            group.add(body, leaf);
+            return group;
+        }
+        function createBanana() {
+            const group = new THREE.Group();
+            const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, -0.05, 0), new THREE.Vector3(0.04, 0, 0), new THREE.Vector3(0.02, 0.07, 0), new THREE.Vector3(-0.02, 0.09, 0)]);
+            const tubeGeo = new THREE.TubeGeometry(curve, 8, 0.032, 6, false);
+            const bananaMat = new THREE.MeshStandardMaterial({ color: 0xF3E5AB, roughness: 0.3 });
+            const body = new THREE.Mesh(tubeGeo, bananaMat);
+            group.add(body);
+            return group;
+        }
+        function createPear() {
+            const group = new THREE.Group();
+            const bottom = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16), new THREE.MeshStandardMaterial({ color: 0xE6C229, roughness: 0.2 }));
+            const top = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.08, 8), new THREE.MeshStandardMaterial({ color: 0xE6C229 }));
+            top.position.y = 0.09;
+            group.add(bottom, top);
+            return group;
+        }
+        function createLemon() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.085, 16), new THREE.MeshStandardMaterial({ color: 0xFDE64A, roughness: 0.2 }));
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.04, 6), new THREE.MeshStandardMaterial({ color: 0xCDAA76 }));
+            tip.position.y = 0.09;
+            group.add(body, tip);
+            return group;
+        }
+        function createStrawberry() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0xDC143C, roughness: 0.15 }));
+            for (let i = 0; i < 6; i++) {
+                const seed = new THREE.Mesh(new THREE.SphereGeometry(0.006, 4), new THREE.MeshStandardMaterial({ color: 0xFFDD88 }));
+                const angle = Math.random() * Math.PI * 2;
+                const rad = 0.05 + Math.random() * 0.04;
+                const yOff = -0.03 + Math.random() * 0.09;
+                seed.position.set(Math.cos(angle) * rad, yOff, Math.sin(angle) * rad);
+                group.add(seed);
+            }
+            const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.04, 6), new THREE.MeshStandardMaterial({ color: 0x6B8E23 }));
+            leaf.position.y = 0.08;
+            group.add(body, leaf);
+            return group;
+        }
+        const fruitCreators = [createApple, createOrange, createBanana, createPear, createLemon, createStrawberry];
+
+        // ==================== AĞAC SINIFI ====================
+        class ProceduralTree {
+            constructor(x, z, season) {
+                this.group = new THREE.Group();
+                this.x = x; this.z = z;
+                this.season = season;
+                this.trunk = null;
+                this.foliageLayers = [];
+                this.fruits = [];
+                this.buildStatic();
+                this.updateSeason(season);
+            }
+
+            buildStatic() {
+                const yBase = terrainHeight(this.x, this.z);
+                const trunkHeight = 0.9 + Math.random() * 0.6;
+                const trunkRad = 0.28 + Math.random() * 0.14;
+                this.trunk = new THREE.Mesh(new THREE.CylinderGeometry(trunkRad, trunkRad*1.15, trunkHeight, 8), 
+                    new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.7 }));
+                this.trunk.position.set(0, yBase + trunkHeight/2, 0);
+                this.trunk.castShadow = true;
+                this.group.add(this.trunk);
+
+                let currentY = yBase + trunkHeight - 0.15;
+                for (let l = 0; l < 3; l++) {
+                    const layerH = 0.55;
+                    const layerRad = trunkRad * (1.7 - l * 0.35);
+                    const foliageMat = new THREE.MeshStandardMaterial({ roughness: 0.5 });
+                    const cone = new THREE.Mesh(new THREE.ConeGeometry(layerRad, layerH, 12), foliageMat);
+                    cone.position.set(0, currentY + layerH/2, 0);
+                    cone.castShadow = true;
+                    this.group.add(cone);
+                    this.foliageLayers.push(cone);
+                    currentY += layerH - 0.08;
                 }
+
+                const fruitCount = 9 + Math.floor(Math.random() * 6);
+                for (let f = 0; f < fruitCount; f++) {
+                    const creatorIdx = Math.floor(Math.random() * fruitCreators.length);
+                    const fruitGroup = fruitCreators[creatorIdx]();
+                    const angle = Math.random() * Math.PI * 2;
+                    const rad = trunkRad * 0.45 + Math.random() * 0.45;
+                    const yOff = yBase + trunkHeight - 0.4 + Math.random() * 1.1;
+                    fruitGroup.position.set(Math.cos(angle) * rad, yOff, Math.sin(angle) * rad);
+                    fruitGroup.castShadow = true;
+                    this.group.add(fruitGroup);
+                    this.fruits.push(fruitGroup);
+                }
+                this.group.position.set(this.x, 0, this.z);
             }
-            
-            static identity(m) {
-                m[0] = 1; m[1] = 0; m[2] = 0; m[3] = 0;
-                m[4] = 0; m[5] = 1; m[6] = 0; m[7] = 0;
-                m[8] = 0; m[9] = 0; m[10] = 1; m[11] = 0;
-                m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
-                return m;
-            }
-            
-            static perspective(fov, aspect, near, far) {
-                const f = 1.0 / Math.tan(fov / 2.0);
-                const nf = 1.0 / (near - far);
-                const m = new Float32Array(16);
-                
-                m[0] = f / aspect; m[1] = 0; m[2] = 0; m[3] = 0;
-                m[4] = 0; m[5] = f; m[6] = 0; m[7] = 0;
-                m[8] = 0; m[9] = 0; m[10] = (far + near) * nf; m[11] = -1;
-                m[12] = 0; m[13] = 0; m[14] = 2 * far * near * nf; m[15] = 0;
-                
-                return new Mat4(m);
-            }
-            
-            static lookAt(eye, target, up) {
-                const zAxis = Vec3.normalize(Vec3.sub(eye, target));
-                const xAxis = Vec3.normalize(Vec3.cross(up, zAxis));
-                const yAxis = Vec3.cross(zAxis, xAxis);
-                
-                const m = new Float32Array(16);
-                m[0] = xAxis.x; m[1] = yAxis.x; m[2] = zAxis.x; m[3] = 0;
-                m[4] = xAxis.y; m[5] = yAxis.y; m[6] = zAxis.y; m[7] = 0;
-                m[8] = xAxis.z; m[9] = yAxis.z; m[10] = zAxis.z; m[11] = 0;
-                m[12] = -Vec3.dot(xAxis, eye);
-                m[13] = -Vec3.dot(yAxis, eye);
-                m[14] = -Vec3.dot(zAxis, eye);
-                m[15] = 1;
-                
-                return new Mat4(m);
-            }
-            
-            static multiply(a, b) {
-                const result = new Float32Array(16);
-                for (let i = 0; i < 4; i++) {
-                    for (let j = 0; j < 4; j++) {
-                        result[i * 4 + j] = 0;
-                        for (let k = 0; k < 4; k++) {
-                            result[i * 4 + j] += a[i * 4 + k] * b[k * 4 + j];
+
+            updateSeason(season) {
+                this.season = season;
+                let foliageColor;
+                if(season === 'spring') foliageColor = 0x6DAA4A;
+                else if(season === 'summer') foliageColor = 0x4F7942;
+                else if(season === 'autumn') foliageColor = 0xCD853F;
+                else foliageColor = 0x9aaebf;
+                this.foliageLayers.forEach(layer => layer.material.color.setHex(foliageColor));
+
+                this.fruits.forEach((fruit, idx) => {
+                    if(season === 'winter') {
+                        fruit.visible = (idx % 3 === 0);
+                        fruit.children.forEach(child => {
+                            if(child.material) {
+                                const newColor = child.material.color.clone().multiplyScalar(0.6);
+                                child.material.color.copy(newColor);
+                            }
+                        });
+                    } else {
+                        fruit.visible = true;
+                        fruit.children.forEach(child => {
+                            if(child.material) {
+                                child.material.color.copy(child.material.color.clone().multiplyScalar(1.0));
+                            }
+                        });
+                        if(season === 'summer') {
+                            fruit.children.forEach(child => {
+                                if(child.material) {
+                                    const brightColor = child.material.color.clone().multiplyScalar(1.2);
+                                    child.material.color.copy(brightColor);
+                                }
+                            });
                         }
                     }
-                }
-                return new Mat4(result);
-            }
-            
-            static translate(m, v) {
-                const t = new Float32Array(16);
-                Mat4.identity(t);
-                t[12] = v.x;
-                t[13] = v.y;
-                t[14] = v.z;
-                return Mat4.multiply(m, new Mat4(t));
-            }
-            
-            static rotateX(m, angle) {
-                const c = Math.cos(angle);
-                const s = Math.sin(angle);
-                const r = new Float32Array(16);
-                Mat4.identity(r);
-                r[5] = c; r[6] = -s;
-                r[9] = s; r[10] = c;
-                return Mat4.multiply(m, new Mat4(r));
-            }
-            
-            static rotateY(m, angle) {
-                const c = Math.cos(angle);
-                const s = Math.sin(angle);
-                const r = new Float32Array(16);
-                Mat4.identity(r);
-                r[0] = c; r[2] = s;
-                r[8] = -s; r[10] = c;
-                return Mat4.multiply(m, new Mat4(r));
-            }
-            
-            static rotateZ(m, angle) {
-                const c = Math.cos(angle);
-                const s = Math.sin(angle);
-                const r = new Float32Array(16);
-                Mat4.identity(r);
-                r[0] = c; r[1] = -s;
-                r[4] = s; r[5] = c;
-                return Mat4.multiply(m, new Mat4(r));
-            }
-            
-            static scale(m, v) {
-                const s = new Float32Array(16);
-                Mat4.identity(s);
-                s[0] = v.x;
-                s[5] = v.y;
-                s[10] = v.z;
-                return Mat4.multiply(m, new Mat4(s));
+                });
+                if(season === 'winter') this.trunk.material.color.setHex(0x6B4C2C);
+                else this.trunk.material.color.setHex(0x8B5A2B);
             }
         }
 
-        // Catmull-Rom Spline
-        class CatmullRomSpline {
-            constructor(controlPoints) {
-                this.controlPoints = controlPoints;
-                this.segmentCount = controlPoints.length - 1;
+        // ==================== AĞACLARI YERLƏŞDİRMƏ ====================
+        let allTrees = [];
+        const treeCount = 230;
+        for (let i = 0; i < treeCount; i++) {
+            let x, z, valid = false;
+            let attempts = 0;
+            while (!valid && attempts < 35) {
+                x = (Math.random() - 0.5) * 34;
+                z = (Math.random() - 0.5) * 34;
+                const distToCenter = Math.sqrt(x*x + z*z);
+                if (Math.abs(x) < 5.2 && Math.abs(z) < 5.2) continue;
+                if (distToCenter < 4.6) continue;
+                const yTest = terrainHeight(x, z);
+                if (yTest < -0.4) continue;
+                let tooClose = false;
+                for (let t of allTrees) {
+                    const dx = t.x - x;
+                    const dz = t.z - z;
+                    if (Math.sqrt(dx*dx + dz*dz) < 1.15) { tooClose = true; break; }
+                }
+                if (!tooClose) valid = true;
+                attempts++;
             }
-            
-            evaluate(t) {
-                if (t <= 0) return this.controlPoints[0];
-                if (t >= 1) return this.controlPoints[this.controlPoints.length - 1];
-                
-                const segment = Math.floor(t * (this.controlPoints.length - 1));
-                const localT = (t * (this.controlPoints.length - 1)) - segment;
-                
-                const p0 = this.controlPoints[Math.max(0, segment - 1)];
-                const p1 = this.controlPoints[segment];
-                const p2 = this.controlPoints[Math.min(segment + 1, this.controlPoints.length - 1)];
-                const p3 = this.controlPoints[Math.min(segment + 2, this.controlPoints.length - 1)];
-                
-                return this.hermite(p0, p1, p2, p3, localT);
+            if (valid) {
+                const tree = new ProceduralTree(x, z, 'spring');
+                scene.add(tree.group);
+                allTrees.push(tree);
             }
-            
-            hermite(p0, p1, p2, p3, t) {
-                const t2 = t * t;
-                const t3 = t2 * t;
-                
-                const h00 = 2 * t3 - 3 * t2 + 1;
-                const h10 = t3 - 2 * t2 + t;
-                const h01 = -2 * t3 + 3 * t2;
-                const h11 = t3 - t2;
-                
-                const m1 = Vec3.mul(Vec3.sub(p2, p0), 0.5);
-                const m2 = Vec3.mul(Vec3.sub(p3, p1), 0.5);
-                
-                return Vec3.add(
-                    Vec3.add(Vec3.mul(p1, h00), Vec3.mul(m1, h10)),
-                    Vec3.add(Vec3.mul(p2, h01), Vec3.mul(m2, h11))
+        }
+
+        // ==================== QUŞLAR (TƏKMİLLƏŞDİRİLMİŞ) ====================
+        let birdsGroup = null;
+        let birdMeshes = [];
+        let birdWings = []; // Quş qanadları
+
+        function createBirdModel() {
+            const birdGroup = new THREE.Group();
+
+            // Quş bədəni
+            const bodyGeo = new THREE.SphereGeometry(0.06, 8, 6);
+            bodyGeo.scale(1, 0.7, 1.4);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xccaa77, roughness: 0.4 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            birdGroup.add(body);
+
+            // Baş
+            const headGeo = new THREE.SphereGeometry(0.035, 8, 6);
+            const head = new THREE.Mesh(headGeo, bodyMat);
+            head.position.set(0, 0.03, 0.06);
+            birdGroup.add(head);
+
+            // Gagası
+            const beakGeo = new THREE.ConeGeometry(0.012, 0.04, 6);
+            const beakMat = new THREE.MeshStandardMaterial({ color: 0xffaa33 });
+            const beak = new THREE.Mesh(beakGeo, beakMat);
+            beak.rotation.x = Math.PI / 2;
+            beak.position.set(0, 0.03, 0.09);
+            birdGroup.add(beak);
+
+            // Quyruq
+            const tailGeo = new THREE.ConeGeometry(0.02, 0.08, 4);
+            const tail = new THREE.Mesh(tailGeo, bodyMat);
+            tail.rotation.x = -Math.PI / 2 + 0.3;
+            tail.position.set(0, 0, -0.08);
+            birdGroup.add(tail);
+
+            // Qanadlar
+            const wingGeo = new THREE.PlaneGeometry(0.12, 0.04);
+            const wingMat = new THREE.MeshStandardMaterial({ 
+                color: 0xbb9977, 
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.9
+            });
+
+            const leftWing = new THREE.Mesh(wingGeo, wingMat);
+            leftWing.position.set(-0.06, 0.02, 0);
+            birdGroup.add(leftWing);
+
+            const rightWing = new THREE.Mesh(wingGeo, wingMat);
+            rightWing.position.set(0.06, 0.02, 0);
+            birdGroup.add(rightWing);
+
+            return { group: birdGroup, leftWing, rightWing };
+        }
+
+        function createBirds(active) {
+            if(birdsGroup) scene.remove(birdsGroup);
+            birdMeshes = [];
+            birdWings = [];
+            if(!active) return;
+
+            birdsGroup = new THREE.Group();
+            const count = 30; // Artırılmış say
+
+            for (let i = 0; i < count; i++) {
+                const birdModel = createBirdModel();
+                const bird = birdModel.group;
+
+                // Rastgele rənglər (müxtəlif quş növləri)
+                const birdColors = [0xccaa77, 0x88aadd, 0xdd8888, 0x88ddaa, 0xddaa88];
+                const color = birdColors[Math.floor(Math.random() * birdColors.length)];
+                bird.children[0].material = bird.children[0].material.clone();
+                bird.children[0].material.color.setHex(color);
+
+                bird.userData = {
+                    angle: Math.random() * Math.PI * 2,
+                    radius: 6 + Math.random() * 14,
+                    ySpeed: 0.3 + Math.random() * 0.5,
+                    yPhase: Math.random() * Math.PI * 2,
+                    speed: 0.15 + Math.random() * 0.25,
+                    wingSpeed: 8 + Math.random() * 6,
+                    wingPhase: Math.random() * Math.PI * 2
+                };
+
+                bird.castShadow = true;
+                birdsGroup.add(bird);
+                birdMeshes.push(bird);
+                birdWings.push({ left: birdModel.leftWing, right: birdModel.rightWing });
+            }
+            scene.add(birdsGroup);
+        }
+
+        function updateBirds(time) {
+            if(!birdsGroup) return;
+            birdMeshes.forEach((bird, idx) => {
+                const data = bird.userData;
+                data.angle += 0.002 * data.speed;
+                const x = Math.cos(data.angle) * data.radius;
+                const z = Math.sin(data.angle) * data.radius;
+                const y = 4.5 + Math.sin(time * data.ySpeed + data.yPhase) * 1.2;
+                bird.position.set(x, y, z);
+
+                const dx = -Math.sin(data.angle);
+                const dz = Math.cos(data.angle);
+                bird.rotation.y = Math.atan2(dx, dz);
+                bird.rotation.z = Math.sin(time * 5) * 0.1;
+
+                // Qanad çırpma animasiyası
+                if(birdWings[idx]) {
+                    const wingAngle = Math.sin(time * data.wingSpeed + data.wingPhase) * 0.6;
+                    birdWings[idx].left.rotation.z = wingAngle;
+                    birdWings[idx].right.rotation.z = -wingAngle;
+                }
+            });
+        }
+
+        // ==================== ÇİÇƏKLƏR (TƏKMİLLƏŞDİRİLMİŞ) ====================
+        let flowerGroup = null;
+        let flowerMeshes = [];
+
+        function createFlowerModel(color) {
+            const group = new THREE.Group();
+
+            // Çiçək ləçəkləri
+            const petalCount = 5 + Math.floor(Math.random() * 3);
+            for(let i = 0; i < petalCount; i++) {
+                const petalGeo = new THREE.SphereGeometry(0.025, 6, 4);
+                petalGeo.scale(1, 0.3, 1.5);
+                const petalMat = new THREE.MeshStandardMaterial({ 
+                    color: color, 
+                    emissive: 0x221100, 
+                    emissiveIntensity: 0.3 
+                });
+                const petal = new THREE.Mesh(petalGeo, petalMat);
+                const angle = (i / petalCount) * Math.PI * 2;
+                petal.position.set(Math.cos(angle) * 0.03, 0.02, Math.sin(angle) * 0.03);
+                petal.rotation.y = angle;
+                petal.rotation.x = 0.3;
+                group.add(petal);
+            }
+
+            // Mərkəz
+            const centerGeo = new THREE.SphereGeometry(0.015, 6, 6);
+            const centerMat = new THREE.MeshStandardMaterial({ color: 0xffdd44 });
+            const center = new THREE.Mesh(centerGeo, centerMat);
+            center.position.y = 0.025;
+            group.add(center);
+
+            // Sap
+            const stemGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.08, 4);
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a7c2a });
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.position.y = -0.04;
+            group.add(stem);
+
+            return group;
+        }
+
+        function createFlowers() {
+            if(flowerGroup) scene.remove(flowerGroup);
+            flowerGroup = new THREE.Group();
+            flowerMeshes = [];
+
+            const colors = [0xff69b4, 0xffdd88, 0xffaa66, 0xee82ee, 0xff6b9d, 0xffb347, 0xff1493];
+
+            for (let i = 0; i < 2500; i++) { // Artırılmış say
+                let x = (Math.random() - 0.5) * 35;
+                let z = (Math.random() - 0.5) * 35;
+                if (Math.abs(x) < 5.5 && Math.abs(z) < 5.5) continue;
+                const y = terrainHeight(x, z);
+                if (y < -0.2) continue;
+
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const flower = createFlowerModel(color);
+                flower.position.set(x, y + 0.04, z);
+
+                // Çiçək animasiyası üçün userData
+                flower.userData = {
+                    baseY: y + 0.04,
+                    swaySpeed: 1 + Math.random() * 2,
+                    swayPhase: Math.random() * Math.PI * 2,
+                    scalePhase: Math.random() * Math.PI * 2
+                };
+
+                flowerGroup.add(flower);
+                flowerMeshes.push(flower);
+            }
+            scene.add(flowerGroup);
+        }
+
+        function updateFlowers(time) {
+            if(!flowerGroup || currentSeason !== 'spring') return;
+            flowerMeshes.forEach(flower => {
+                const data = flower.userData;
+                // Çiçəklərin yellənməsi
+                flower.rotation.z = Math.sin(time * data.swaySpeed + data.swayPhase) * 0.1;
+                flower.rotation.x = Math.cos(time * data.swaySpeed * 0.7 + data.swayPhase) * 0.08;
+                // Çiçəklərin açılması (scale animasiyası)
+                const scale = 0.8 + Math.sin(time * 0.5 + data.scalePhase) * 0.2;
+                flower.scale.setScalar(scale);
+            });
+        }
+
+        // ==================== YARPaq TÖKÜLMƏ (PAYIZ) ====================
+        let fallingLeaves = [];
+        let leafGroup = null;
+
+        function createFallingLeaves() {
+            if(leafGroup) scene.remove(leafGroup);
+            leafGroup = new THREE.Group();
+            fallingLeaves = [];
+
+            const leafColors = [0xCD853F, 0xD2691E, 0x8B4513, 0xA0522D, 0xDAA520];
+
+            for(let i = 0; i < 300; i++) {
+                const leafGeo = new THREE.PlaneGeometry(0.06, 0.04);
+                const color = leafColors[Math.floor(Math.random() * leafColors.length)];
+                const leafMat = new THREE.MeshStandardMaterial({ 
+                    color: color, 
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const leaf = new THREE.Mesh(leafGeo, leafMat);
+
+                leaf.position.set(
+                    (Math.random() - 0.5) * 30,
+                    3 + Math.random() * 8,
+                    (Math.random() - 0.5) * 30
                 );
-            }
-            
-            getTangent(t) {
-                const epsilon = 0.001;
-                const p1 = this.evaluate(Math.max(0, t - epsilon));
-                const p2 = this.evaluate(Math.min(1, t + epsilon));
-                return Vec3.normalize(Vec3.sub(p2, p1));
-            }
-        }
 
-        // ============================================================================
-        // MESH GENERATORS
-        // ============================================================================
-
-        class Mesh {
-            constructor(vertices, indices, normals, texCoords = null) {
-                this.vertices = vertices;
-                this.indices = indices;
-                this.normals = normals;
-                this.texCoords = texCoords;
-                this.vertexCount = vertices.length / 3;
-                this.indexCount = indices.length;
-            }
-            
-            getVertexArray() {
-                return new Float32Array(this.vertices);
-            }
-            
-            getIndexArray() {
-                return new Uint32Array(this.indices);
-            }
-            
-            getNormalArray() {
-                return new Float32Array(this.normals);
-            }
-            
-            getTexCoordArray() {
-                if (!this.texCoords) return null;
-                return new Float32Array(this.texCoords);
-            }
-        }
-
-        function createSphereMesh(radius, segments, rings) {
-            const vertices = [];
-            const indices = [];
-            const normals = [];
-            const texCoords = [];
-            
-            for (let ring = 0; ring <= rings; ring++) {
-                const theta = (ring / rings) * Math.PI;
-                const sinTheta = Math.sin(theta);
-                const cosTheta = Math.cos(theta);
-                
-                for (let seg = 0; seg <= segments; seg++) {
-                    const phi = (seg / segments) * 2 * Math.PI;
-                    const sinPhi = Math.sin(phi);
-                    const cosPhi = Math.cos(phi);
-                    
-                    const x = radius * sinTheta * cosPhi;
-                    const y = radius * cosTheta;
-                    const z = radius * sinTheta * sinPhi;
-                    
-                    vertices.push(x, y, z);
-                    normals.push(sinTheta * cosPhi, cosTheta, sinTheta * sinPhi);
-                    texCoords.push(seg / segments, ring / rings);
-                }
-            }
-            
-            for (let ring = 0; ring < rings; ring++) {
-                for (let seg = 0; seg < segments; seg++) {
-                    const a = ring * (segments + 1) + seg;
-                    const b = a + 1;
-                    const c = a + (segments + 1);
-                    const d = c + 1;
-                    
-                    indices.push(a, c, b);
-                    indices.push(b, c, d);
-                }
-            }
-            
-            return new Mesh(vertices, indices, normals, texCoords);
-        }
-
-        function createTorusMesh(majorRadius, minorRadius, majorSegments, minorSegments) {
-            const vertices = [];
-            const indices = [];
-            const normals = [];
-            const texCoords = [];
-            
-            for (let major = 0; major <= majorSegments; major++) {
-                const theta = (major / majorSegments) * 2 * Math.PI;
-                const sinTheta = Math.sin(theta);
-                const cosTheta = Math.cos(theta);
-                
-                for (let minor = 0; minor <= minorSegments; minor++) {
-                    const phi = (minor / minorSegments) * 2 * Math.PI;
-                    const sinPhi = Math.sin(phi);
-                    const cosPhi = Math.cos(phi);
-                    
-                    const x = (majorRadius + minorRadius * cosPhi) * cosTheta;
-                    const y = minorRadius * sinPhi;
-                    const z = (majorRadius + minorRadius * cosPhi) * sinTheta;
-                    
-                    vertices.push(x, y, z);
-                    normals.push(cosPhi * cosTheta, sinPhi, cosPhi * sinTheta);
-                    texCoords.push(major / majorSegments, minor / minorSegments);
-                }
-            }
-            
-            for (let major = 0; major < majorSegments; major++) {
-                for (let minor = 0; minor < minorSegments; minor++) {
-                    const a = major * (minorSegments + 1) + minor;
-                    const b = a + 1;
-                    const c = a + (minorSegments + 1);
-                    const d = c + 1;
-                    
-                    indices.push(a, c, b);
-                    indices.push(b, c, d);
-                }
-            }
-            
-            return new Mesh(vertices, indices, normals, texCoords);
-        }
-
-        function createCylinderMesh(radius, height, segments, rings) {
-            const vertices = [];
-            const indices = [];
-            const normals = [];
-            const texCoords = [];
-            
-            for (let ring = 0; ring <= rings; ring++) {
-                const y = (ring / rings) * height - height / 2;
-                
-                for (let seg = 0; seg <= segments; seg++) {
-                    const angle = (seg / segments) * 2 * Math.PI;
-                    const x = radius * Math.cos(angle);
-                    const z = radius * Math.sin(angle);
-                    
-                    vertices.push(x, y, z);
-                    normals.push(Math.cos(angle), 0, Math.sin(angle));
-                    texCoords.push(seg / segments, ring / rings);
-                }
-            }
-            
-            const baseVertex = vertices.length / 3;
-            
-            // Top cap
-            vertices.push(0, height / 2, 0);
-            normals.push(0, 1, 0);
-            texCoords.push(0.5, 0.5);
-            
-            for (let seg = 0; seg <= segments; seg++) {
-                const angle = (seg / segments) * 2 * Math.PI;
-                const x = radius * Math.cos(angle);
-                const z = radius * Math.sin(angle);
-                vertices.push(x, height / 2, z);
-                normals.push(0, 1, 0);
-                texCoords.push(0.5 + 0.5 * Math.cos(angle), 0.5 + 0.5 * Math.sin(angle));
-            }
-            
-            // Bottom cap
-            const bottomCenterIdx = vertices.length / 3;
-            vertices.push(0, -height / 2, 0);
-            normals.push(0, -1, 0);
-            texCoords.push(0.5, 0.5);
-            
-            for (let seg = 0; seg <= segments; seg++) {
-                const angle = (seg / segments) * 2 * Math.PI;
-                const x = radius * Math.cos(angle);
-                const z = radius * Math.sin(angle);
-                vertices.push(x, -height / 2, z);
-                normals.push(0, -1, 0);
-                texCoords.push(0.5 + 0.5 * Math.cos(angle), 0.5 + 0.5 * Math.sin(angle));
-            }
-            
-            // Side indices
-            for (let ring = 0; ring < rings; ring++) {
-                for (let seg = 0; seg < segments; seg++) {
-                    const a = ring * (segments + 1) + seg;
-                    const b = a + 1;
-                    const c = a + (segments + 1);
-                    const d = c + 1;
-                    
-                    indices.push(a, b, c);
-                    indices.push(b, d, c);
-                }
-            }
-            
-            // Top cap indices
-            const topCenterIdx = baseVertex;
-            for (let seg = 0; seg < segments; seg++) {
-                indices.push(topCenterIdx, topCenterIdx + seg + 1, topCenterIdx + seg + 2);
-            }
-            
-            // Bottom cap indices
-            for (let seg = 0; seg < segments; seg++) {
-                indices.push(bottomCenterIdx, bottomCenterIdx + seg + 2, bottomCenterIdx + seg + 1);
-            }
-            
-            return new Mesh(vertices, indices, normals, texCoords);
-        }
-
-        function createConeMesh(radius, height, segments) {
-            const vertices = [];
-            const indices = [];
-            const normals = [];
-            const texCoords = [];
-            
-            vertices.push(0, height / 2, 0);
-            normals.push(0, 1, 0);
-            texCoords.push(0.5, 0);
-            
-            for (let seg = 0; seg <= segments; seg++) {
-                const angle = (seg / segments) * 2 * Math.PI;
-                const x = radius * Math.cos(angle);
-                const z = radius * Math.sin(angle);
-                vertices.push(x, -height / 2, z);
-                
-                const nx = Math.cos(angle);
-                const nz = Math.sin(angle);
-                const len = Math.sqrt(nx * nx + nz * nz + (height / radius) * (height / radius));
-                normals.push(nx / len, 0, nz / len);
-                
-                texCoords.push(0.5 + 0.5 * Math.cos(angle), seg / segments);
-            }
-            
-            const baseCenterIdx = vertices.length / 3;
-            vertices.push(0, -height / 2, 0);
-            normals.push(0, -1, 0);
-            texCoords.push(0.5, 0.5);
-            
-            for (let seg = 0; seg < segments; seg++) {
-                indices.push(0, seg + 2, seg + 1);
-            }
-            
-            for (let seg = 0; seg < segments; seg++) {
-                indices.push(baseCenterIdx, seg + 2, seg + 1);
-            }
-            
-            return new Mesh(vertices, indices, normals, texCoords);
-        }
-
-        function createTerrainMesh(width, depth, resolution) {
-            const vertices = [];
-            const indices = [];
-            const normals = [];
-            const texCoords = [];
-            
-            const xStep = width / resolution;
-            const zStep = depth / resolution;
-            
-            for (let z = 0; z <= resolution; z++) {
-                for (let x = 0; x <= resolution; x++) {
-                    const px = -width / 2 + x * xStep;
-                    const pz = -depth / 2 + z * zStep;
-                    
-                    const h = Math.sin(px * 0.1) * 0.3 + Math.cos(pz * 0.08) * 0.2 +
-                              Math.sin(px * 0.05 + pz * 0.07) * 0.15;
-                    
-                    vertices.push(px, h, pz);
-                    normals.push(0, 1, 0);
-                    texCoords.push(x / resolution, z / resolution);
-                }
-            }
-            
-            for (let z = 0; z < resolution; z++) {
-                for (let x = 0; x < resolution; x++) {
-                    const a = z * (resolution + 1) + x;
-                    const b = a + 1;
-                    const c = a + (resolution + 1);
-                    const d = c + 1;
-                    
-                    indices.push(a, c, b);
-                    indices.push(b, c, d);
-                }
-            }
-            
-            // Recalculate normals
-            const recalcNormals = new Array(vertices.length / 3 * 3).fill(0);
-            for (let i = 0; i < indices.length; i += 3) {
-                const i0 = indices[i];
-                const i1 = indices[i + 1];
-                const i2 = indices[i + 2];
-                
-                const v0 = [vertices[i0*3], vertices[i0*3+1], vertices[i0*3+2]];
-                const v1 = [vertices[i1*3], vertices[i1*3+1], vertices[i1*3+2]];
-                const v2 = [vertices[i2*3], vertices[i2*3+1], vertices[i2*3+2]];
-                
-                const e1 = [v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2]];
-                const e2 = [v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2]];
-                
-                const n = [
-                    e1[1]*e2[2] - e1[2]*e2[1],
-                    e1[2]*e2[0] - e1[0]*e2[2],
-                    e1[0]*e2[1] - e1[1]*e2[0]
-                ];
-                
-                recalcNormals[i0*3] += n[0];
-                recalcNormals[i0*3+1] += n[1];
-                recalcNormals[i0*3+2] += n[2];
-                recalcNormals[i1*3] += n[0];
-                recalcNormals[i1*3+1] += n[1];
-                recalcNormals[i1*3+2] += n[2];
-                recalcNormals[i2*3] += n[0];
-                recalcNormals[i2*3+1] += n[1];
-                recalcNormals[i2*3+2] += n[2];
-            }
-            
-            for (let i = 0; i < recalcNormals.length; i += 3) {
-                const len = Math.sqrt(recalcNormals[i]**2 + recalcNormals[i+1]**2 + recalcNormals[i+2]**2);
-                if (len > 0) {
-                    normals[i] = recalcNormals[i] / len;
-                    normals[i+1] = recalcNormals[i+1] / len;
-                    normals[i+2] = recalcNormals[i+2] / len;
-                }
-            }
-            
-            return new Mesh(vertices, indices, normals, texCoords);
-        }
-
-        function createPlaneMesh(width, depth, segments) {
-            const vertices = [];
-            const indices = [];
-            const normals = [];
-            const texCoords = [];
-            
-            const xStep = width / segments;
-            const zStep = depth / segments;
-            
-            for (let z = 0; z <= segments; z++) {
-                for (let x = 0; x <= segments; x++) {
-                    const px = -width / 2 + x * xStep;
-                    const pz = -depth / 2 + z * zStep;
-                    
-                    vertices.push(px, 0, pz);
-                    normals.push(0, 1, 0);
-                    texCoords.push(x / segments, z / segments);
-                }
-            }
-            
-            for (let z = 0; z < segments; z++) {
-                for (let x = 0; x < segments; x++) {
-                    const a = z * (segments + 1) + x;
-                    const b = a + 1;
-                    const c = a + (segments + 1);
-                    const d = c + 1;
-                    
-                    indices.push(a, c, b);
-                    indices.push(b, c, d);
-                }
-            }
-            
-            return new Mesh(vertices, indices, normals, texCoords);
-        }
-
-        // ============================================================================
-        // SHADERS - Fixed: No leading whitespace before #version
-        // ============================================================================
-
-        const VERTEX_SHADER = `#version 300 es
-precision highp float;
-
-in vec3 position;
-in vec3 normal;
-in vec2 texCoord;
-
-out VS_OUT {
-    vec3 fragPos;
-    vec3 fragNormal;
-    vec2 fragTexCoord;
-    vec4 fragPosLightSpace;
-} vs_out;
-
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
-uniform mat4 uLightSpaceMatrix;
-
-void main(void) {
-    vs_out.fragPos = (uModel * vec4(position, 1.0)).xyz;
-    vs_out.fragNormal = normalize((uModel * vec4(normal, 0.0)).xyz);
-    vs_out.fragTexCoord = texCoord;
-    vs_out.fragPosLightSpace = uLightSpaceMatrix * vec4(vs_out.fragPos, 1.0);
-    
-    gl_Position = uProjection * uView * vec4(vs_out.fragPos, 1.0);
-}`;
-
-        const FRAGMENT_SHADER = `#version 300 es
-precision highp float;
-
-in VS_OUT {
-    vec3 fragPos;
-    vec3 fragNormal;
-    vec2 fragTexCoord;
-    vec4 fragPosLightSpace;
-} fs_in;
-
-out vec4 outColor;
-
-uniform sampler2D uShadowMap;
-uniform vec3 uCameraPos;
-uniform vec3 uSunDirection;
-uniform vec3 uSunColor;
-
-const float PI = 3.14159265359;
-
-float shadowCalculation(vec4 fragPosLightSpace) {
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5;
-    
-    if(projCoords.z > 1.0)
-        return 1.0;
-    
-    float closestDepth = texture(uShadowMap, projCoords.xy).r;
-    float currentDepth = projCoords.z;
-    
-    float bias = 0.005;
-    float shadow = currentDepth - bias > closestDepth ? 0.3 : 1.0;
-    
-    return shadow;
-}
-
-vec3 blinnPhong(vec3 normal, vec3 viewDir, vec3 lightDir, vec3 color, vec3 albedo) {
-    float diff = max(dot(normal, lightDir), 0.0);
-    
-    vec3 halfDir = normalize(viewDir + lightDir);
-    float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
-    
-    vec3 diffuse = diff * albedo * color;
-    vec3 specular = spec * color * 0.5;
-    
-    return diffuse + specular;
-}
-
-void main(void) {
-    vec3 normal = normalize(fs_in.fragNormal);
-    vec3 viewDir = normalize(uCameraPos - fs_in.fragPos);
-    vec3 lightDir = normalize(uSunDirection);
-    
-    float shadow = shadowCalculation(fs_in.fragPosLightSpace);
-    
-    vec3 albedo = mix(vec3(0.2, 0.6, 0.1), vec3(0.8, 0.5, 0.2), 0.3);
-    vec3 lighting = blinnPhong(normal, viewDir, lightDir, uSunColor, albedo);
-    
-    vec3 ambient = vec3(0.2) * albedo;
-    
-    vec3 color = (ambient + lighting * shadow) * 1.0;
-    
-    float dist = length(fs_in.fragPos - uCameraPos);
-    float fogFactor = exp(-dist * 0.001);
-    vec3 fogColor = vec3(0.7, 0.7, 0.8);
-    color = mix(fogColor, color, fogFactor);
-    
-    color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0/2.2));
-    
-    outColor = vec4(color, 1.0);
-}`;
-
-        const SHADOW_VERTEX_SHADER = `#version 300 es
-precision highp float;
-
-in vec3 position;
-
-uniform mat4 uLightSpaceMatrix;
-uniform mat4 uModel;
-
-void main(void) {
-    gl_Position = uLightSpaceMatrix * uModel * vec4(position, 1.0);
-}`;
-
-        const SHADOW_FRAGMENT_SHADER = `#version 300 es
-precision highp float;
-
-void main(void) {
-    gl_FragDepth = gl_FragCoord.z;
-}`;
-
-        function compileShader(gl, source, type) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                const error = gl.getShaderInfoLog(shader);
-                console.error(`Shader compilation error (${type === gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT'}):`, error);
-                console.error('Source:', source);
-                gl.deleteShader(shader);
-                return null;
-            }
-            return shader;
-        }
-
-        function createProgram(gl, vertexSource, fragmentSource) {
-            const vertexShader = compileShader(gl, vertexSource, gl.VERTEX_SHADER);
-            const fragmentShader = compileShader(gl, fragmentSource, gl.FRAGMENT_SHADER);
-            
-            if (!vertexShader || !fragmentShader) return null;
-            
-            const program = gl.createProgram();
-            gl.attachShader(program, vertexShader);
-            gl.attachShader(program, fragmentShader);
-            gl.linkProgram(program);
-            
-            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-                console.error(`Program linking error:`, gl.getProgramInfoLog(program));
-                gl.deleteProgram(program);
-                return null;
-            }
-            
-            gl.deleteShader(vertexShader);
-            gl.deleteShader(fragmentShader);
-            
-            return program;
-        }
-
-        function getUniformLocation(gl, program, name) {
-            return gl.getUniformLocation(program, name);
-        }
-
-        function getAttribLocation(gl, program, name) {
-            return gl.getAttribLocation(program, name);
-        }
-
-        // ============================================================================
-        // MAIN APPLICATION
-        // ============================================================================
-
-        class OrchardScene {
-            constructor() {
-                this.canvas = document.getElementById('canvas');
-                this.gl = this.canvas.getContext('webgl2', {
-                    antialias: true,
-                    depth: true
-                });
-                
-                if (!this.gl) {
-                    alert('WebGL2 not supported!');
-                    return;
-                }
-                
-                this.setupCanvas();
-                this.initGL();
-                this.createShaders();
-                this.createMeshes();
-                this.createScene();
-                this.setupSpline();
-                this.createShadowFramebuffer();
-                
-                this.time = 0;
-                this.animationSpeed = 1.0;
-                this.isAnimating = true;
-                this.frameCount = 0;
-                this.lastTime = performance.now();
-                this.fps = 0;
-                
-                this.setupControls();
-                this.render();
-            }
-            
-            setupCanvas() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-                
-                window.addEventListener('resize', () => this.handleResize());
-            }
-            
-            handleResize() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-            }
-            
-            initGL() {
-                const gl = this.gl;
-                
-                gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-                gl.clearColor(0.7, 0.7, 0.8, 1.0);
-                gl.enable(gl.DEPTH_TEST);
-                gl.depthFunc(gl.LEQUAL);
-                gl.enable(gl.CULL_FACE);
-                gl.cullFace(gl.BACK);
-            }
-            
-            createShaders() {
-                const gl = this.gl;
-                
-                this.mainProgram = createProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
-                this.shadowProgram = createProgram(gl, SHADOW_VERTEX_SHADER, SHADOW_FRAGMENT_SHADER);
-                
-                if (!this.mainProgram) {
-                    console.error('Failed to create main shader program');
-                    document.getElementById('status').textContent = 'Error: Main shader failed';
-                }
-                if (!this.shadowProgram) {
-                    console.error('Failed to create shadow shader program');
-                }
-            }
-            
-            createMeshes() {
-                this.meshes = {
-                    sphere: createSphereMesh(1.0, 32, 16),
-                    torus: createTorusMesh(1.0, 0.3, 32, 16),
-                    cylinder: createCylinderMesh(0.5, 3.0, 16, 8),
-                    cone: createConeMesh(2.0, 4.0, 16),
-                    terrain: createTerrainMesh(100, 100, 32),
-                    plane: createPlaneMesh(50, 50, 8)
+                leaf.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.02,
+                        -0.01 - Math.random() * 0.02,
+                        (Math.random() - 0.5) * 0.02
+                    ),
+                    rotationSpeed: new THREE.Vector3(
+                        Math.random() * 0.1,
+                        Math.random() * 0.1,
+                        Math.random() * 0.1
+                    ),
+                    swayAmount: 0.02 + Math.random() * 0.03,
+                    swaySpeed: 1 + Math.random() * 2,
+                    swayPhase: Math.random() * Math.PI * 2
                 };
-                
-                this.buffers = {};
-                for (const [name, mesh] of Object.entries(this.meshes)) {
-                    this.buffers[name] = this.createMeshBuffers(mesh);
-                }
+
+                leafGroup.add(leaf);
+                fallingLeaves.push(leaf);
             }
-            
-            createMeshBuffers(mesh) {
-                const gl = this.gl;
-                
-                const vao = gl.createVertexArray();
-                gl.bindVertexArray(vao);
-                
-                // Vertex positions
-                const posVBO = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, posVBO);
-                gl.bufferData(gl.ARRAY_BUFFER, mesh.getVertexArray(), gl.STATIC_DRAW);
-                
-                const posLoc = getAttribLocation(this.gl, this.mainProgram, 'position');
-                gl.enableVertexAttribArray(posLoc);
-                gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 12, 0);
-                
-                // Vertex normals
-                const normVBO = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, normVBO);
-                gl.bufferData(gl.ARRAY_BUFFER, mesh.getNormalArray(), gl.STATIC_DRAW);
-                
-                const normLoc = getAttribLocation(this.gl, this.mainProgram, 'normal');
-                gl.enableVertexAttribArray(normLoc);
-                gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 12, 0);
-                
-                // Texture coordinates
-                let texVBO = null;
-                const texCoords = mesh.getTexCoordArray();
-                if (texCoords) {
-                    texVBO = gl.createBuffer();
-                    gl.bindBuffer(gl.ARRAY_BUFFER, texVBO);
-                    gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
-                    
-                    const texLoc = getAttribLocation(this.gl, this.mainProgram, 'texCoord');
-                    gl.enableVertexAttribArray(texLoc);
-                    gl.vertexAttribPointer(texLoc, 2, gl.FLOAT, false, 8, 0);
-                }
-                
-                // Index buffer
-                const ebo = gl.createBuffer();
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
-                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.getIndexArray(), gl.STATIC_DRAW);
-                
-                gl.bindVertexArray(null);
-                
-                return {
-                    vao: vao,
-                    posVBO: posVBO,
-                    normVBO: normVBO,
-                    texVBO: texVBO,
-                    ebo: ebo,
-                    indexCount: mesh.indexCount
-                };
-            }
-            
-            createShadowFramebuffer() {
-                const gl = this.gl;
-                
-                this.shadowFramebuffer = gl.createFramebuffer();
-                gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowFramebuffer);
-                
-                this.shadowTexture = gl.createTexture();
-                gl.bindTexture(gl.TEXTURE_2D, this.shadowTexture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, 1024, 1024, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                
-                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.shadowTexture, 0);
-                
-                if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-                    console.error('Shadow framebuffer incomplete');
-                }
-                
-                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            }
-            
-            createScene() {
-                this.objects = [];
-                
-                // Terrain
-                this.objects.push({
-                    mesh: 'terrain',
-                    position: new Vec3(0, -1, 0),
-                    scale: new Vec3(1, 1, 1),
-                    rotation: new Vec3(0, 0, 0)
-                });
-                
-                // Trees
-                for (let i = 0; i < 5; i++) {
-                    const angle = (i / 5) * Math.PI * 2;
-                    const dist = 20;
-                    
-                    this.objects.push({
-                        mesh: 'cylinder',
-                        position: new Vec3(Math.cos(angle) * dist, 0, Math.sin(angle) * dist),
-                        scale: new Vec3(1, 1.5, 1),
-                        rotation: new Vec3(0, 0, 0)
-                    });
-                    
-                    this.objects.push({
-                        mesh: 'cone',
-                        position: new Vec3(Math.cos(angle) * dist, 2, Math.sin(angle) * dist),
-                        scale: new Vec3(1.2, 1.2, 1.2),
-                        rotation: new Vec3(0, 0, 0)
-                    });
-                }
-                
-                // Fruits
-                for (let i = 0; i < 10; i++) {
-                    const angle = (i / 10) * Math.PI * 2;
-                    const dist = 25;
-                    const height = Math.sin(i * 0.5) * 2 + 3;
-                    
-                    this.objects.push({
-                        mesh: 'sphere',
-                        position: new Vec3(Math.cos(angle) * dist, height, Math.sin(angle) * dist),
-                        scale: new Vec3(0.5, 0.5, 0.5),
-                        rotation: new Vec3(0, 0, 0)
-                    });
-                }
-                
-                // Water surface
-                this.objects.push({
-                    mesh: 'plane',
-                    position: new Vec3(0, -2, 0),
-                    scale: new Vec3(1, 1, 1),
-                    rotation: new Vec3(0, 0, 0),
-                    reflective: true
-                });
-            }
-            
-            setupSpline() {
-                const controlPoints = [
-                    new Vec3(30, 5, 0),
-                    new Vec3(20, 5, 20),
-                    new Vec3(-20, 5, 30),
-                    new Vec3(-30, 5, 10),
-                    new Vec3(-20, 5, -20),
-                    new Vec3(20, 5, -30),
-                    new Vec3(30, 5, 0)
-                ];
-                
-                this.spline = new CatmullRomSpline(controlPoints);
-            }
-            
-            setupControls() {
-                window.addEventListener('keydown', (e) => {
-                    switch (e.code) {
-                        case 'Space':
-                            this.isAnimating = !this.isAnimating;
-                            break;
-                        case 'KeyR':
-                            this.time = 0;
-                            break;
-                        case 'Equal':
-                            this.animationSpeed = Math.min(2.0, this.animationSpeed + 0.1);
-                            break;
-                        case 'Minus':
-                            this.animationSpeed = Math.max(0.1, this.animationSpeed - 0.1);
-                            break;
-                    }
-                });
-            }
-            
-            render() {
-                const currentTime = performance.now();
-                const deltaTime = (currentTime - this.lastTime) / 1000;
-                this.lastTime = currentTime;
-                
-                if (this.isAnimating) {
-                    this.time += deltaTime * this.animationSpeed;
-                }
-                
-                this.frameCount++;
-                if (this.frameCount % 30 === 0) {
-                    this.fps = Math.round(1 / deltaTime);
-                    document.getElementById('fps').textContent = `FPS: ${this.fps}`;
-                }
-                
-                this.updateCamera();
-                this.updateScene();
-                this.renderShadowMap();
-                this.renderScene();
-                
-                requestAnimationFrame(() => this.render());
-            }
-            
-            updateCamera() {
-                const t = (this.time % 10) / 10;
-                this.cameraPos = this.spline.evaluate(t);
-                this.cameraPos.y += 2;
-                
-                const lookT = Math.min(1, t + 0.05);
-                this.lookTarget = this.spline.evaluate(lookT);
-                this.lookTarget.y += 2;
-            }
-            
-            updateScene() {
-                for (let i = 0; i < this.objects.length; i++) {
-                    const obj = this.objects[i];
-                    obj.rotation.y += 0.01;
-                }
-            }
-            
-            renderShadowMap() {
-                const gl = this.gl;
-                
-                gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowFramebuffer);
-                gl.viewport(0, 0, 1024, 1024);
-                gl.clear(gl.DEPTH_BUFFER_BIT);
-                
-                gl.useProgram(this.shadowProgram);
-                
-                const lightPos = new Vec3(50, 50, 50);
-                const lightView = Mat4.lookAt(lightPos, new Vec3(0, 0, 0), new Vec3(0, 1, 0));
-                const lightProjection = Mat4.perspective(Math.PI / 4, 1, 0.1, 1000);
-                const lightSpaceMatrix = Mat4.multiply(lightProjection, lightView);
-                
-                const modelLoc = getUniformLocation(gl, this.shadowProgram, 'uModel');
-                const lsLoc = getUniformLocation(gl, this.shadowProgram, 'uLightSpaceMatrix');
-                
-                gl.uniformMatrix4fv(lsLoc, false, lightSpaceMatrix.data);
-                
-                for (const obj of this.objects) {
-                    let model = new Mat4();
-                    model = Mat4.translate(model, obj.position);
-                    model = Mat4.rotateX(model, obj.rotation.x);
-                    model = Mat4.rotateY(model, obj.rotation.y);
-                    model = Mat4.rotateZ(model, obj.rotation.z);
-                    model = Mat4.scale(model, obj.scale);
-                    
-                    gl.uniformMatrix4fv(modelLoc, false, model.data);
-                    
-                    const buffer = this.buffers[obj.mesh];
-                    gl.bindVertexArray(buffer.vao);
-                    gl.drawElements(gl.TRIANGLES, buffer.indexCount, gl.UNSIGNED_INT, 0);
-                }
-                
-                this.lightSpaceMatrix = lightSpaceMatrix;
-                
-                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-            }
-            
-            renderScene() {
-                const gl = this.gl;
-                
-                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-                
-                const projection = Mat4.perspective(Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 1000);
-                const view = Mat4.lookAt(this.cameraPos, this.lookTarget, new Vec3(0, 1, 0));
-                
-                gl.useProgram(this.mainProgram);
-                
-                const projLoc = getUniformLocation(gl, this.mainProgram, 'uProjection');
-                const viewLoc = getUniformLocation(gl, this.mainProgram, 'uView');
-                const modelLoc = getUniformLocation(gl, this.mainProgram, 'uModel');
-                const cameraPosLoc = getUniformLocation(gl, this.mainProgram, 'uCameraPos');
-                const sunDirLoc = getUniformLocation(gl, this.mainProgram, 'uSunDirection');
-                const sunColorLoc = getUniformLocation(gl, this.mainProgram, 'uSunColor');
-                const lsLoc = getUniformLocation(gl, this.mainProgram, 'uLightSpaceMatrix');
-                const shadowMapLoc = getUniformLocation(gl, this.mainProgram, 'uShadowMap');
-                
-                gl.uniformMatrix4fv(projLoc, false, projection.data);
-                gl.uniformMatrix4fv(viewLoc, false, view.data);
-                gl.uniformMatrix4fv(lsLoc, false, this.lightSpaceMatrix.data);
-                gl.uniform3fv(cameraPosLoc, this.cameraPos.toArray());
-                gl.uniform3fv(sunDirLoc, Vec3.normalize(new Vec3(0.8, 1, 0.5)).toArray());
-                gl.uniform3fv(sunColorLoc, [1.0, 0.9, 0.8]);
-                
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, this.shadowTexture);
-                gl.uniform1i(shadowMapLoc, 0);
-                
-                for (const obj of this.objects) {
-                    let model = new Mat4();
-                    model = Mat4.translate(model, obj.position);
-                    model = Mat4.rotateX(model, obj.rotation.x);
-                    model = Mat4.rotateY(model, obj.rotation.y);
-                    model = Mat4.rotateZ(model, obj.rotation.z);
-                    model = Mat4.scale(model, obj.scale);
-                    
-                    gl.uniformMatrix4fv(modelLoc, false, model.data);
-                    
-                    const buffer = this.buffers[obj.mesh];
-                    gl.bindVertexArray(buffer.vao);
-                    gl.drawElements(gl.TRIANGLES, buffer.indexCount, gl.UNSIGNED_INT, 0);
-                }
-                
-                gl.bindVertexArray(null);
-            }
+            scene.add(leafGroup);
         }
 
-        // Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            const scene = new OrchardScene();
-            
-            document.getElementById('status').textContent = 'Status: Running';
-            document.getElementById('meshes').textContent = `Meshes: ${Object.keys(scene.meshes).length}`;
-            
-            console.log('🌳 Orchard Scene Initialized');
-            console.log('Available meshes:', Object.keys(scene.meshes));
-            console.log('Objects in scene:', scene.objects.length);
+        function updateFallingLeaves(time) {
+            if(!leafGroup || currentSeason !== 'autumn') return;
+
+            fallingLeaves.forEach(leaf => {
+                const data = leaf.userData;
+
+                // Yarpaq düşməsi
+                leaf.position.add(data.velocity);
+                leaf.position.x += Math.sin(time * data.swaySpeed + data.swayPhase) * data.swayAmount;
+
+                // Fırlanma
+                leaf.rotation.x += data.rotationSpeed.x;
+                leaf.rotation.y += data.rotationSpeed.y;
+                leaf.rotation.z += data.rotationSpeed.z;
+
+                // Yere çatanda yenidən başlat
+                const groundY = terrainHeight(leaf.position.x, leaf.position.z);
+                if(leaf.position.y < groundY) {
+                    leaf.position.y = 8 + Math.random() * 4;
+                    leaf.position.x = (Math.random() - 0.5) * 30;
+                    leaf.position.z = (Math.random() - 0.5) * 30;
+                }
+            });
+        }
+
+        // ==================== QAR (QIIŞ) ====================
+        let snowSystem = null;
+        let snowFlakes = [];
+
+        function createSnow() {
+            if(snowSystem) scene.remove(snowSystem);
+            snowSystem = new THREE.Group();
+            snowFlakes = [];
+
+            for(let i = 0; i < 1500; i++) {
+                const flakeGeo = new THREE.SphereGeometry(0.015 + Math.random() * 0.015, 4, 4);
+                const flakeMat = new THREE.MeshStandardMaterial({ 
+                    color: 0xffffff, 
+                    transparent: true, 
+                    opacity: 0.7 + Math.random() * 0.3,
+                    emissive: 0xaaaaaa,
+                    emissiveIntensity: 0.2
+                });
+                const flake = new THREE.Mesh(flakeGeo, flakeMat);
+
+                flake.position.set(
+                    (Math.random() - 0.5) * 40,
+                    Math.random() * 15,
+                    (Math.random() - 0.5) * 40
+                );
+
+                flake.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.01,
+                        -0.01 - Math.random() * 0.02,
+                        (Math.random() - 0.5) * 0.01
+                    ),
+                    swaySpeed: 0.5 + Math.random() * 1.5,
+                    swayPhase: Math.random() * Math.PI * 2,
+                    swayAmount: 0.01 + Math.random() * 0.02
+                };
+
+                snowSystem.add(flake);
+                snowFlakes.push(flake);
+            }
+            scene.add(snowSystem);
+        }
+
+        function updateSnow(time) {
+            if(!snowSystem || currentSeason !== 'winter') return;
+
+            snowFlakes.forEach(flake => {
+                const data = flake.userData;
+                flake.position.add(data.velocity);
+                flake.position.x += Math.sin(time * data.swaySpeed + data.swayPhase) * data.swayAmount;
+
+                const groundY = terrainHeight(flake.position.x, flake.position.z);
+                if(flake.position.y < groundY) {
+                    flake.position.y = 12 + Math.random() * 5;
+                    flake.position.x = (Math.random() - 0.5) * 40;
+                    flake.position.z = (Math.random() - 0.5) * 40;
+                }
+            });
+        }
+
+        // ==================== KƏPƏNLƏR (YAZ) ====================
+        let butterflies = [];
+        let butterflyGroup = null;
+
+        function createButterflies() {
+            if(butterflyGroup) scene.remove(butterflyGroup);
+            butterflyGroup = new THREE.Group();
+            butterflies = [];
+
+            const colors = [0xff69b4, 0xffaa00, 0x88ddff, 0xff88aa, 0xaaff88];
+
+            for(let i = 0; i < 20; i++) {
+                const group = new THREE.Group();
+                const color = colors[Math.floor(Math.random() * colors.length)];
+
+                // Qanadlar
+                const wingGeo = new THREE.PlaneGeometry(0.08, 0.06);
+                const wingMat = new THREE.MeshStandardMaterial({ 
+                    color: color, 
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                const leftWing = new THREE.Mesh(wingGeo, wingMat);
+                leftWing.position.x = -0.04;
+                group.add(leftWing);
+
+                const rightWing = new THREE.Mesh(wingGeo, wingMat);
+                rightWing.position.x = 0.04;
+                group.add(rightWing);
+
+                // Bədən
+                const bodyGeo = new THREE.SphereGeometry(0.015, 6, 6);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                group.add(body);
+
+                group.position.set(
+                    (Math.random() - 0.5) * 20,
+                    1 + Math.random() * 3,
+                    (Math.random() - 0.5) * 20
+                );
+
+                group.userData = {
+                    centerX: group.position.x,
+                    centerZ: group.position.z,
+                    centerY: group.position.y,
+                    radius: 1 + Math.random() * 3,
+                    speed: 0.5 + Math.random() * 1,
+                    yOffset: Math.random() * Math.PI * 2,
+                    wingSpeed: 10 + Math.random() * 10
+                };
+
+                butterflyGroup.add(group);
+                butterflies.push({ group, leftWing, rightWing });
+            }
+            scene.add(butterflyGroup);
+        }
+
+        function updateButterflies(time) {
+            if(!butterflyGroup || currentSeason !== 'spring') return;
+
+            butterflies.forEach(({ group, leftWing, rightWing }) => {
+                const data = group.userData;
+                const angle = time * data.speed;
+
+                group.position.x = data.centerX + Math.cos(angle) * data.radius;
+                group.position.z = data.centerZ + Math.sin(angle) * data.radius;
+                group.position.y = data.centerY + Math.sin(time * 2 + data.yOffset) * 0.5;
+
+                group.rotation.y = angle + Math.PI / 2;
+
+                // Qanad çırpma
+                const wingAngle = Math.sin(time * data.wingSpeed) * 0.8;
+                leftWing.rotation.y = wingAngle;
+                rightWing.rotation.y = -wingAngle;
+            });
+        }
+
+        // ==================== DEKOR ELEMENTLƏRİ ====================
+        let decorGroup = null;
+        function createDecor(season) {
+            if(decorGroup) scene.remove(decorGroup);
+            decorGroup = new THREE.Group();
+            const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8A7F6D });
+            const grassMat = new THREE.MeshStandardMaterial({ color: 0x88aa55 });
+            const count = season === 'summer' ? 600 : (season === 'autumn' ? 500 : 400);
+
+            for (let i = 0; i < count; i++) {
+                let x = (Math.random() - 0.5) * 34;
+                let z = (Math.random() - 0.5) * 34;
+                if (Math.abs(x) < 5.5 && Math.abs(z) < 5.5) continue;
+                const y = terrainHeight(x, z);
+                if (y < -0.3) continue;
+                const type = Math.random();
+                let item;
+                if (type < 0.65) {
+                    item = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.12, 5), grassMat);
+                } else {
+                    item = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07), stoneMat);
+                }
+                item.position.set(x, y, z);
+                item.castShadow = true;
+                decorGroup.add(item);
+            }
+            scene.add(decorGroup);
+        }
+
+        // ==================== GECƏ/GÜNDÜZ İDARƏSİ ====================
+        let currentLightMode = 'day';
+        let autoLightTime = 0;
+        let lastTimestamp = performance.now();
+
+        function setLightIntensity(factor) {
+            const intensity = 0.3 + factor * 1.2;
+            const ambient = 0.2 + factor * 0.6;
+            sunLight.intensity = intensity;
+            ambientLight.intensity = ambient;
+            fillLight.intensity = 0.2 + factor * 0.5;
+            backLight.intensity = 0.1 + factor * 0.4;
+            const skyTopColor = new THREE.Color().setHSL(0.1, 0.8, 0.3 + factor * 0.4);
+            const skyBottomColor = new THREE.Color().setHSL(0.08, 0.9, 0.05 + factor * 0.2);
+            skyMaterial.uniforms.topColor.value = skyTopColor;
+            skyMaterial.uniforms.bottomColor.value = skyBottomColor;
+            sunSphere.material.color.setHSL(0.12, 1.0, 0.5 + factor * 0.3);
+            sunSphere.material.emissiveIntensity = 0.3 + factor * 1.0;
+            scene.background.setHSL(0.6, 0.7, 0.05 + factor * 0.15);
+        }
+
+        // ==================== SƏMA ====================
+        const skySphereGeo = new THREE.SphereGeometry(100, 64, 48);
+        const vertexShaderSky = `
+            varying vec3 vWorldPosition;
+            void main() { vec4 worldPos = modelMatrix * vec4(position, 1.0); vWorldPosition = worldPos.xyz; gl_Position = projectionMatrix * viewMatrix * worldPos; }
+        `;
+        const fragmentShaderSky = `
+            uniform vec3 topColor; uniform vec3 bottomColor; uniform float offset;
+            varying vec3 vWorldPosition;
+            void main() { float h = normalize(vWorldPosition).y; float t = clamp((h + offset) / (1.0 + offset), 0.0, 1.0); gl_FragColor = vec4(mix(bottomColor, topColor, t), 1.0); }
+        `;
+        const skyMaterial = new THREE.ShaderMaterial({
+            uniforms: { topColor: { value: new THREE.Color(0xffaa66) }, bottomColor: { value: new THREE.Color(0x331d0a) }, offset: { value: 0.38 } },
+            vertexShader: vertexShaderSky, fragmentShader: fragmentShaderSky, side: THREE.BackSide, depthWrite: false
         });
+        const skyDome = new THREE.Mesh(skySphereGeo, skyMaterial);
+        scene.add(skyDome);
+
+        const sunSphere = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4411, emissiveIntensity: 1.0 }));
+        sunSphere.position.set(18, 14, -12);
+        scene.add(sunSphere);
+
+        // ==================== PARTIKULLAR ====================
+        let particleSystem = null;
+        function createSeasonalParticles(season) {
+            if(particleSystem) scene.remove(particleSystem);
+            let count = season === 'winter' ? 1200 : (season === 'autumn' ? 700 : 400);
+            let color = season === 'winter' ? 0xffffff : (season === 'autumn' ? 0xd47c3a : 0xffdd99);
+            let size = season === 'winter' ? 0.045 : 0.04;
+            const geom = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            for(let i=0; i<count; i++) {
+                positions[i*3] = (Math.random() - 0.5) * 48;
+                positions[i*3+1] = Math.random() * 12;
+                positions[i*3+2] = (Math.random() - 0.5) * 44;
+            }
+            geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({ color: color, size: size, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending });
+            particleSystem = new THREE.Points(geom, mat);
+            scene.add(particleSystem);
+        }
+
+        // ==================== KAMERA YOLU ====================
+        const controlPoints = [
+            new THREE.Vector3(-13, 2.7, 9), new THREE.Vector3(-6, 3.1, 13), new THREE.Vector3(1, 2.8, 12.5),
+            new THREE.Vector3(8, 2.3, 8.5), new THREE.Vector3(11, 2.0, 1), new THREE.Vector3(6, 2.4, -7),
+            new THREE.Vector3(-2, 2.6, -10), new THREE.Vector3(-9, 2.9, -6), new THREE.Vector3(-13, 2.7, 9)
+        ];
+        const splineCurve = new THREE.CatmullRomCurve3(controlPoints);
+        splineCurve.curveType = 'centripetal';
+        splineCurve.closed = true;
+
+        controlPoints.forEach((point) => {
+            const marker = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), new THREE.MeshStandardMaterial({ color: 0xaaffaa, emissive: 0x228822 }));
+            marker.position.copy(point);
+            scene.add(marker);
+        });
+
+        let tParam = 0;
+        let cameraAnimating = true;
+        const lookAtTarget = new THREE.Vector3(0, 1.4, 0);
+
+        // ==================== FƏSIL DƏYIŞMƏ FUNKSİYASI ====================
+        let currentSeason = 'spring';
+        const seasonNames = {
+            spring: '🌸 Yaz Fəsli',
+            summer: '☀️ Yay Fəsli',
+            autumn: '🍂 Payız Fəsli',
+            winter: '❄️ Qış Fəsli'
+        };
+        const weatherNames = {
+            spring: '🌸 Çiçəklənmə | Kəpənəklər',
+            summer: '☀️ Günəşli | Quşlar cəngavərlik',
+            autumn: '🍂 Yarpaq tökülmə | Küləkli',
+            winter: '❄️ Qar yağışı | Soyuq'
+        };
+
+        function setSeason(season) {
+            currentSeason = season;
+            allTrees.forEach(tree => tree.updateSeason(season));
+
+            // UI yenilə
+            document.getElementById('season-indicator').textContent = seasonNames[season];
+            document.getElementById('weather-indicator').textContent = weatherNames[season];
+
+            // Title rəngi dəyiş
+            const titleColors = {
+                spring: '#ffecb3',
+                summer: '#ffdd88',
+                autumn: '#ffcc99',
+                winter: '#ddeeff'
+            };
+            document.getElementById('title').style.color = titleColors[season];
+
+            const posAttr = terrainGeometry.attributes.position.array;
+            const colAttr = terrainGeometry.attributes.color.array;
+            for (let i = 0; i <= segments; i++) {
+                for (let j = 0; j <= segments; j++) {
+                    const idx = (i * (segments + 1) + j) * 3;
+                    const y = posAttr[idx+1];
+                    let r,g,b;
+                    if(season === 'spring') { r = 0.35 + y*0.4; g = 0.6 + y*0.35; b = 0.25 + y*0.2; }
+                    else if(season === 'summer') { r = 0.3 + y*0.45; g = 0.65 + y*0.3; b = 0.2 + y*0.15; }
+                    else if(season === 'autumn') { r = 0.55 + y*0.3; g = 0.45 + y*0.25; b = 0.2 + y*0.1; }
+                    else { r = 0.85; g = 0.88; b = 0.95; }
+                    colAttr[idx] = Math.min(1.0, r);
+                    colAttr[idx+1] = Math.min(1.0, g);
+                    colAttr[idx+2] = Math.min(1.0, b);
+                }
+            }
+            terrainGeometry.attributes.color.needsUpdate = true;
+
+            if(season === 'spring') { 
+                sunLight.color.setHex(0xffbb88); 
+                ambientLight.color.setHex(0x443322);
+                skyMaterial.uniforms.topColor.value.setHex(0xffaa88);
+                createFlowers();
+                createButterflies();
+                if(decorGroup) scene.remove(decorGroup);
+                createBirds(true);
+                if(leafGroup) scene.remove(leafGroup);
+                if(snowSystem) scene.remove(snowSystem);
+            } else if(season === 'summer') { 
+                sunLight.color.setHex(0xffdd99); 
+                ambientLight.color.setHex(0x554433);
+                skyMaterial.uniforms.topColor.value.setHex(0xffcc88);
+                if(flowerGroup) scene.remove(flowerGroup);
+                if(butterflyGroup) scene.remove(butterflyGroup);
+                createDecor('summer');
+                createBirds(true);
+                if(leafGroup) scene.remove(leafGroup);
+                if(snowSystem) scene.remove(snowSystem);
+            } else if(season === 'autumn') { 
+                sunLight.color.setHex(0xff9955); 
+                ambientLight.color.setHex(0x664422);
+                skyMaterial.uniforms.topColor.value.setHex(0xcc8844);
+                if(flowerGroup) scene.remove(flowerGroup);
+                if(butterflyGroup) scene.remove(butterflyGroup);
+                createDecor('autumn');
+                createBirds(false);
+                createFallingLeaves();
+                if(snowSystem) scene.remove(snowSystem);
+            } else { 
+                sunLight.color.setHex(0xccaaee); 
+                ambientLight.color.setHex(0x224466);
+                skyMaterial.uniforms.topColor.value.setHex(0x9ab0d0);
+                if(flowerGroup) scene.remove(flowerGroup);
+                if(butterflyGroup) scene.remove(butterflyGroup);
+                createDecor('winter');
+                createBirds(false);
+                if(leafGroup) scene.remove(leafGroup);
+                createSnow();
+            }
+            createSeasonalParticles(season);
+        }
+
+        // ==================== UI ====================
+        document.getElementById('springBtn').addEventListener('click', () => { setSeason('spring'); updateActiveSeason('springBtn'); });
+        document.getElementById('summerBtn').addEventListener('click', () => { setSeason('summer'); updateActiveSeason('summerBtn'); });
+        document.getElementById('autumnBtn').addEventListener('click', () => { setSeason('autumn'); updateActiveSeason('autumnBtn'); });
+        document.getElementById('winterBtn').addEventListener('click', () => { setSeason('winter'); updateActiveSeason('winterBtn'); });
+
+        function updateActiveSeason(activeId) {
+            ['springBtn','summerBtn','autumnBtn','winterBtn'].forEach(id => document.getElementById(id).classList.toggle('active', id === activeId));
+        }
+
+        document.getElementById('nightBtn').addEventListener('click', () => { 
+            currentLightMode = 'night'; 
+            setLightIntensity(0.15);
+            updateActiveLight('nightBtn');
+        });
+        document.getElementById('dayBtn').addEventListener('click', () => { 
+            currentLightMode = 'day'; 
+            setLightIntensity(1.0);
+            updateActiveLight('dayBtn');
+        });
+        document.getElementById('autoBtn').addEventListener('click', () => { 
+            currentLightMode = 'auto'; 
+            updateActiveLight('autoBtn');
+        });
+
+        function updateActiveLight(activeId) {
+            ['nightBtn','dayBtn','autoBtn'].forEach(id => document.getElementById(id).classList.toggle('active', id === activeId));
+        }
+
+        document.getElementById('resetCamBtn').addEventListener('click', () => { tParam = 0; camera.position.copy(splineCurve.getPoint(0)); camera.lookAt(lookAtTarget); });
+
+        document.getElementById('toggleAnimBtn').addEventListener('click', () => { 
+            cameraAnimating = !cameraAnimating;
+            document.getElementById('toggleAnimBtn').textContent = cameraAnimating ? '⏸️ Dayan' : '▶️ Davam';
+        });
+
+        // ==================== ÜZÜKLƏR ====================
+        const rings = [];
+        const ringMatObj = new THREE.MeshStandardMaterial({ color: 0xffaa77, emissive: 0xaa4411, metalness: 0.7 });
+        const ringPos = [[-3,1.8,5], [4.2,2.1,-3.5], [-2,1.5,-6.2], [1.2,1.9,4.2]];
+        ringPos.forEach(pos => {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 64, 160), ringMatObj);
+            ring.position.set(pos[0], pos[1], pos[2]);
+            ring.castShadow = true;
+            scene.add(ring);
+            rings.push(ring);
+        });
+
+        // ==================== ANIMASIYA ====================
+        let timeAcc = 0;
+        let animating = true;
+
+        function animate(now) {
+            let delta = Math.min(0.033, (now - lastTimestamp) / 1000);
+            lastTimestamp = now;
+            timeAcc += delta;
+
+            if(currentLightMode === 'auto') {
+                autoLightTime += 0.0007 * (delta * 60);
+                if(autoLightTime >= 1) autoLightTime -= 1;
+                const lightFactor = 0.2 + 0.8 * Math.sin(autoLightTime * Math.PI);
+                setLightIntensity(Math.max(0.15, Math.min(1.0, lightFactor)));
+            }
+
+            if (cameraAnimating) {
+                tParam += 0.0009 * (delta * 60);
+                if (tParam >= 1) tParam -= 1;
+                const camPos = splineCurve.getPoint(tParam);
+                camera.position.copy(camPos);
+            }
+            camera.lookAt(lookAtTarget);
+
+            rings.forEach(ring => { ring.rotation.x += 0.012; ring.rotation.z += 0.007; });
+
+            if(particleSystem && currentSeason === 'winter') {
+                const pos = particleSystem.geometry.attributes.position.array;
+                for(let i=0; i<pos.length/3; i++) { 
+                    pos[i*3+1] -= 0.022; 
+                    if(pos[i*3+1] < -0.5) pos[i*3+1] = 8 + Math.random()*4; 
+                }
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+            } else if(particleSystem && currentSeason === 'autumn') {
+                const pos = particleSystem.geometry.attributes.position.array;
+                for(let i=0; i<pos.length/3; i++) { 
+                    pos[i*3+1] -= 0.006; 
+                    if(pos[i*3+1] < 0.2) pos[i*3+1] = 5; 
+                }
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // Quşları yenilə
+            if((currentSeason === 'spring' || currentSeason === 'summer') && birdsGroup) {
+                updateBirds(timeAcc);
+            }
+
+            // Çiçəkləri yenilə
+            updateFlowers(timeAcc);
+
+            // Yarpaq tökülməsini yenilə
+            updateFallingLeaves(timeAcc);
+
+            // Qarı yenilə
+            updateSnow(timeAcc);
+
+            // Kəpənəkləri yenilə
+            updateButterflies(timeAcc);
+
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        createSeasonalParticles('spring');
+        createButterflies();
+        setSeason('spring');
+        setLightIntensity(1.0);
+        lastTimestamp = performance.now();
+        requestAnimationFrame(animate);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        const addLabel = (text, pos) => {
+            const div = document.createElement('div'); div.textContent = text; div.style.cssText = 'color:#ffdd99;background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:20px;font-size:12px;';
+            const label = new CSS2DObject(div); label.position.copy(pos); scene.add(label);
+        };
+        addLabel('🍎', controlPoints[0]); addLabel('🍊', controlPoints[2]); addLabel('🍌', controlPoints[4]); addLabel('🍓', controlPoints[6]);
     </script>
 </body>
 </html>
